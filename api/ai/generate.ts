@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { AiGeneratedCarouselResponseSchema } from '../../src/services/ai/schemas';
+import { AiGeneratedCarouselResponseSchema } from '../../src/services/ai/schemas.js';
 
 const carouselInput = z.object({ mode: z.literal('carousel'), prompt: z.string().trim().min(1).max(6000) });
 const captionInput = z.object({
