@@ -15,9 +15,8 @@ export const TemplateWrapper = React.forwardRef<HTMLDivElement, TemplateWrapperP
           width: 1080 * scale,
           height: 1350 * scale,
           overflow: 'hidden',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
+          position: 'relative',
+          flexShrink: 0,
           ...style,
         }}
         className={className}
@@ -29,7 +28,9 @@ export const TemplateWrapper = React.forwardRef<HTMLDivElement, TemplateWrapperP
             height: 1350,
             transform: `scale(${scale})`,
             transformOrigin: 'top left',
-            position: 'relative',
+            position: 'absolute',
+            top: 0,
+            left: 0,
             overflow: 'hidden',
             boxSizing: 'border-box',
           }}

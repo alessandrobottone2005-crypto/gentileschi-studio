@@ -1,8 +1,14 @@
 export type TemplateType = 'cover' | 'agenda' | 'notice';
 
 export interface SlideImage {
-  url: string;
+  // Runtime URLs are never written to project storage.
+  url?: string;
   originalUrl?: string;
+  storagePath?: string;
+  originalStoragePath?: string;
+  assetKey?: TemplateType;
+  originalAssetKey?: TemplateType;
+  missing?: boolean;
   isTransparent?: boolean;
   scale?: number; // default 1
   posX?: number;  // px offset
@@ -63,4 +69,5 @@ export interface Project {
   slides: Slide[];
   caption?: string;
   userId?: string;
+  revision?: number;
 }

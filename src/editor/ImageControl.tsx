@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { SlideImage } from '../types/template';
-import { removeImageBackground } from '../services/image/bgRemovalService';
+import { saveMedia } from '../services/image/mediaStore';
+import { isSupabaseConfigured } from '../services/supabase/supabaseClient';
+import { legacyDefaultImageKey } from '../engine/defaultAssets';
 import { Upload, Scissors, RotateCcw, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface ImageControlProps {
@@ -17,47 +19,58 @@ export const ImageControl: React.FC<ImageControlProps> = ({
   onReset,
 }) => {
   const [isProcessingBg, setIsProcessingBg] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [progressMsg, setProgressMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currentUrl = image?.url || defaultImageUrl;
   const scale = image?.scale ?? 1;
   const posX = image?.posX ?? 0;
   const posY = image?.posY ?? 0;
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      setErrorMsg('Carica un file immagine valido (PNG, JPG, WEBP).');
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(file);
-    onChange({
-      url: objectUrl,
-      originalUrl: objectUrl,
-      scale: 1,
-      posX: 0,
-      posY: 0,
-    });
+    setIsUploading(true);
     setErrorMsg('');
+    try {
+      const saved = await saveMedia(file);
+      onChange({
+        ...saved,
+        originalUrl: saved.url,
+        originalStoragePath: saved.storagePath,
+        scale: 1,
+        posX: 0,
+        posY: 0,
+      });
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : 'Impossibile salvare la fotografia. Riprova.');
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
   };
 
   const handleRemoveBackground = async () => {
     setIsProcessingBg(true);
     setProgressMsg('Inizializzazione rimozione sfondo in locale...');
     setErrorMsg('');
+    let transparentUrl: string | undefined;
 
     try {
-      const transparentUrl = await removeImageBackground(currentUrl, (p) => {
+      const { removeImageBackground } = await import('../services/image/bgRemovalService');
+      transparentUrl = await removeImageBackground(currentUrl, (p) => {
         setProgressMsg(`Elaborazione AI locale: ${p.progress}%`);
       });
-
+      const response = await fetch(transparentUrl);
+      const processed = await response.blob();
+      const saved = await saveMedia(processed);
       onChange({
-        url: transparentUrl,
+        ...saved,
         originalUrl: image?.originalUrl || currentUrl,
+        originalStoragePath: image?.originalStoragePath || image?.storagePath,
+        originalAssetKey: image?.originalAssetKey || image?.assetKey || legacyDefaultImageKey(currentUrl),
         isTransparent: true,
         scale,
         posX,
@@ -66,9 +79,28 @@ export const ImageControl: React.FC<ImageControlProps> = ({
     } catch (err: any) {
       setErrorMsg(err.message || 'Errore nella rimozione dello sfondo.');
     } finally {
+      if (transparentUrl) URL.revokeObjectURL(transparentUrl);
       setIsProcessingBg(false);
       setProgressMsg('');
     }
+  };
+
+  const handleReset = () => {
+    if (image?.isTransparent && (image.originalStoragePath || image.originalAssetKey)) {
+      onChange({
+        url: image.originalUrl || defaultImageUrl,
+        storagePath: image.originalStoragePath,
+        assetKey: image.originalAssetKey,
+        originalUrl: image.originalUrl,
+        originalStoragePath: image.originalStoragePath,
+        originalAssetKey: image.originalAssetKey,
+        scale: 1,
+        posX: 0,
+        posY: 0,
+      });
+      return;
+    }
+    onReset();
   };
 
   return (
@@ -101,7 +133,10 @@ export const ImageControl: React.FC<ImageControlProps> = ({
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-          <label
+          <button
+            type="button"
+            disabled={isUploading}
+            onClick={() => fileInputRef.current?.click()}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -114,15 +149,16 @@ export const ImageControl: React.FC<ImageControlProps> = ({
               fontSize: 13,
               fontWeight: 600,
               cursor: 'pointer',
+              border: 0,
             }}
           >
-            <Upload size={15} /> Carica Nuova Foto
-            <input type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
-          </label>
+            <Upload size={15} /> {isUploading ? 'Caricamento...' : 'Carica Nuova Foto'}
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleFileUpload} disabled={isUploading} hidden aria-label="Seleziona fotografia" />
 
           <button
             type="button"
-            disabled={isProcessingBg}
+            disabled={isProcessingBg || isUploading || image?.missing}
             onClick={handleRemoveBackground}
             style={{
               display: 'inline-flex',
@@ -151,9 +187,9 @@ export const ImageControl: React.FC<ImageControlProps> = ({
         </div>
       )}
 
-      {errorMsg && (
+      {(errorMsg || image?.missing) && (
         <div style={{ fontSize: 12, color: '#ff6b6b', marginBottom: 10 }}>
-          {errorMsg}
+          {errorMsg || 'La fotografia salvata in precedenza non è più disponibile. Caricala di nuovo.'}
         </div>
       )}
 
@@ -164,6 +200,7 @@ export const ImageControl: React.FC<ImageControlProps> = ({
             Zoom ({Math.round(scale * 100)}%)
           </label>
           <input
+            aria-label="Zoom fotografia"
             type="range"
             min="0.5"
             max="2.5"
@@ -179,6 +216,7 @@ export const ImageControl: React.FC<ImageControlProps> = ({
             Sposta Orizzontale ({posX}px)
           </label>
           <input
+            aria-label="Sposta fotografia orizzontalmente"
             type="range"
             min="-300"
             max="300"
@@ -195,6 +233,7 @@ export const ImageControl: React.FC<ImageControlProps> = ({
           Sposta Verticale ({posY}px)
         </label>
         <input
+          aria-label="Sposta fotografia verticalmente"
           type="range"
           min="-300"
           max="300"
@@ -208,7 +247,7 @@ export const ImageControl: React.FC<ImageControlProps> = ({
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
         <button
           type="button"
-          onClick={onReset}
+          onClick={handleReset}
           style={{
             background: 'none',
             border: 'none',
@@ -228,7 +267,7 @@ export const ImageControl: React.FC<ImageControlProps> = ({
       <div style={{ marginTop: 14, padding: 8, backgroundColor: '#0b0e2b', borderRadius: 6, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
         <AlertTriangle size={16} color="#dfff2f" style={{ flexShrink: 0, marginTop: 2 }} />
         <p style={{ fontSize: 11, color: '#a0a8d4', lineHeight: 1.4, margin: 0 }}>
-          <strong>Tutela della Privacy:</strong> Assicurati di disporre della liberatoria firmata prima di pubblicare fotografie che ritraggono studenti minorenni del Gentileschi. L'elaborazione avviene localmente sul tuo browser.
+          <strong>Tutela della Privacy:</strong> Assicurati di disporre della liberatoria prima di pubblicare fotografie di studenti minorenni. La rimozione dello sfondo avviene nel browser. {isSupabaseConfigured ? 'Le foto vengono archiviate online e sono visibili a tutti gli utenti registrati.' : 'Le foto restano su questo dispositivo.'}
         </p>
       </div>
     </div>

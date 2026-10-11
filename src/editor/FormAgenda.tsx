@@ -63,6 +63,7 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({ content, onChange }) => 
             Sigla Titolo
           </label>
           <input
+            aria-label="Sigla titolo ordine del giorno"
             type="text"
             value={content.title}
             onChange={(e) => onChange({ ...content, title: e.target.value })}
@@ -84,6 +85,7 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({ content, onChange }) => 
             Etichetta Espansa
           </label>
           <input
+            aria-label="Etichetta ordine del giorno"
             type="text"
             value={content.subtitle}
             onChange={(e) => onChange({ ...content, subtitle: e.target.value })}
@@ -151,6 +153,7 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({ content, onChange }) => 
                   {/* Highlight toggle */}
                   <button
                     type="button"
+                    aria-label={`${item.isHighlight ? 'Rimuovi evidenza da' : 'Evidenzia'} punto ${index + 1}`}
                     onClick={() => handleUpdateItem(index, { isHighlight: !item.isHighlight })}
                     style={{
                       display: 'flex',
@@ -172,6 +175,7 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({ content, onChange }) => 
                   {/* Reorder */}
                   <button
                     type="button"
+                    aria-label={`Sposta punto ${index + 1} su`}
                     disabled={index === 0}
                     onClick={() => handleMove(index, 'up')}
                     style={{ background: 'none', border: 'none', color: '#8c95c8', cursor: index === 0 ? 'default' : 'pointer' }}
@@ -180,6 +184,7 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({ content, onChange }) => 
                   </button>
                   <button
                     type="button"
+                    aria-label={`Sposta punto ${index + 1} giù`}
                     disabled={index === content.items.length - 1}
                     onClick={() => handleMove(index, 'down')}
                     style={{ background: 'none', border: 'none', color: '#8c95c8', cursor: index === content.items.length - 1 ? 'default' : 'pointer' }}
@@ -191,6 +196,7 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({ content, onChange }) => 
                   {content.items.length > 1 && (
                     <button
                       type="button"
+                      aria-label={`Elimina punto ${index + 1}`}
                       onClick={() => handleRemoveItem(index)}
                       style={{ background: 'none', border: 'none', color: '#ff6b6b', cursor: 'pointer' }}
                     >
@@ -201,6 +207,7 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({ content, onChange }) => 
               </div>
 
               <textarea
+                aria-label={`Testo punto ${index + 1}`}
                 rows={2}
                 value={item.text}
                 onChange={(e) => handleUpdateItem(index, { text: e.target.value })}

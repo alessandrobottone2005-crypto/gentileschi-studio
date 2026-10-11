@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Project } from '../types/template';
-import { getProjects, saveProject, duplicateProject, deleteProject } from '../services/supabase/projectService';
+import { getProjects, saveProject, duplicateProject, deleteProject, countLocalProjectsToImport, importLocalProjects } from '../services/supabase/projectService';
 import { isSupabaseConfigured } from '../services/supabase/supabaseClient';
 import { createInitialProject, createDefaultSlide } from '../engine/defaultData';
 import { Plus, Copy, Trash2, Edit3, Sparkles, Layers, Image as ImageIcon, Cloud, HardDrive } from 'lucide-react';
+import { useDialogFocus } from '../editor/useDialogFocus';
 
 interface DashboardPageProps {
   onOpenProject: (projectId: string) => void;
+  onSignOut?: () => void;
+  openError?: string;
 }
 
-export const DashboardPage: React.FC<DashboardPageProps> = ({ onOpenProject }) => {
+export const DashboardPage: React.FC<DashboardPageProps> = ({ onOpenProject, onSignOut, openError }) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -18,12 +21,32 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onOpenProject }) =
   const [newMode, setNewMode] = useState<'manual' | 'ai'>('manual');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitleText, setEditTitleText] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [localImportCount, setLocalImportCount] = useState(() => {
+    try { return countLocalProjectsToImport(); } catch { return 0; }
+  });
+  const [importing, setImporting] = useState(false);
+  const createDialogRef = useDialogFocus(() => setShowCreateModal(false), showCreateModal);
 
   const loadAll = async () => {
     setLoading(true);
-    const list = await getProjects();
-    setProjects(list);
-    setLoading(false);
+    setErrorMessage('');
+    try {
+      setProjects(await getProjects());
+      setLocalImportCount(countLocalProjectsToImport());
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Impossibile caricare i progetti.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImportLocal = async () => {
+    setImporting(true);
+    setErrorMessage('');
+    try { await importLocalProjects(); await loadAll(); }
+    catch (error) { setErrorMessage(error instanceof Error ? error.message : 'Importazione non riuscita.'); }
+    finally { setImporting(false); }
   };
 
   useEffect(() => {
@@ -38,23 +61,27 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onOpenProject }) =
     if (newType === 'single') {
       proj.slides = [createDefaultSlide('cover')];
     }
-    await saveProject(proj);
-    setShowCreateModal(false);
-    setNewTitle('');
-    onOpenProject(proj.id);
+    try {
+      await saveProject(proj);
+      setShowCreateModal(false);
+      setNewTitle('');
+      onOpenProject(proj.id);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Creazione non riuscita.');
+    }
   };
 
   const handleDuplicate = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    await duplicateProject(id);
-    loadAll();
+    try { await duplicateProject(id); await loadAll(); }
+    catch (error) { setErrorMessage(error instanceof Error ? error.message : 'Duplicazione non riuscita.'); }
   };
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm('Sei sicuro di voler eliminare questo progetto?')) {
-      await deleteProject(id);
-      loadAll();
+      try { await deleteProject(id); await loadAll(); }
+      catch (error) { setErrorMessage(error instanceof Error ? error.message : 'Eliminazione non riuscita.'); }
     }
   };
 
@@ -67,9 +94,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onOpenProject }) =
   const handleSaveRename = async (proj: Project, e: React.MouseEvent) => {
     e.stopPropagation();
     if (editTitleText.trim()) {
-      await saveProject({ ...proj, title: editTitleText.trim() });
-      setEditingId(null);
-      loadAll();
+      try {
+        await saveProject({ ...proj, title: editTitleText.trim() });
+        setEditingId(null);
+        await loadAll();
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : 'Rinomina non riuscita.');
+      }
     }
   };
 
@@ -103,6 +134,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onOpenProject }) =
             </p>
           </div>
 
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {onSignOut && <button type="button" onClick={onSignOut} className="secondary-action">Esci</button>}
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
@@ -124,8 +157,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onOpenProject }) =
           >
             <Plus size={18} /> Nuovo Progetto
           </button>
+          </div>
         </div>
       </div>
+
+      {localImportCount > 0 && (
+        <div className="local-import-notice">
+          <span>Ci sono {localImportCount} progetti salvati su questo dispositivo. Importandoli, progetti e foto saranno visibili a tutti gli utenti registrati.</span>
+          <button type="button" disabled={importing} onClick={handleImportLocal}>{importing ? 'Importazione...' : 'Importa progetti locali'}</button>
+        </div>
+      )}
+
+      {(errorMessage || openError) && <div role="alert" className="app-error">{errorMessage || openError} <button type="button" onClick={loadAll}>Riprova</button></div>}
 
       {/* Projects Grid */}
       {loading ? (
@@ -263,16 +306,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onOpenProject }) =
       {/* Create Project Modal */}
       {showCreateModal && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(5, 7, 24, 0.85)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ width: '100%', maxWidth: 480, backgroundColor: '#10143d', border: '1px solid #304bff', borderRadius: 12, padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <h2 style={{ fontFamily: "'Archivo Black', sans-serif", fontSize: 20, color: '#ffffff', margin: 0 }}>
+          <div ref={createDialogRef} role="dialog" aria-modal="true" aria-labelledby="create-project-title" tabIndex={-1} style={{ width: '100%', maxWidth: 480, backgroundColor: '#10143d', border: '1px solid #304bff', borderRadius: 12, padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <h2 id="create-project-title" style={{ fontFamily: "'Archivo Black', sans-serif", fontSize: 20, color: '#ffffff', margin: 0 }}>
               Crea Nuovo Progetto
             </h2>
 
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#f4f0e6', marginBottom: 6 }}>
+              <label htmlFor="new-project-title" style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#f4f0e6', marginBottom: 6 }}>
                 Titolo Progetto
               </label>
               <input
+                id="new-project-title"
                 type="text"
                 placeholder="es. Assemblea Novembre 2026"
                 value={newTitle}
@@ -280,6 +324,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onOpenProject }) =
                 style={{ width: '100%', padding: '10px 12px', backgroundColor: '#141842', border: '1px solid #232a68', borderRadius: 6, color: '#ffffff', fontSize: 14 }}
               />
             </div>
+
+            {errorMessage && <div role="alert" className="app-error">{errorMessage}</div>}
 
             {/* Type selector: Single vs Carousel */}
             <div>

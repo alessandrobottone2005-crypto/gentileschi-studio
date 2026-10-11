@@ -35,7 +35,6 @@ export async function captureSlideNodeToPng(node: HTMLElement): Promise<string> 
     canvasWidth: 1080,
     canvasHeight: 1350,
     pixelRatio: 1,
-    cacheBust: true,
   });
 }
 
@@ -53,7 +52,6 @@ export async function captureSlideNodeToBlob(node: HTMLElement): Promise<Blob> {
     canvasWidth: 1080,
     canvasHeight: 1350,
     pixelRatio: 1,
-    cacheBust: true,
   });
 
   if (!blob) {
@@ -77,6 +75,12 @@ export async function downloadSingleSlidePng(
 
   const blob = await captureSlideNodeToBlob(node);
   saveAs(blob, filename);
+}
+
+export function downloadSingleSlideBlob(blob: Blob, projectTitle: string, slideIndex: number): void {
+  const slug = formatProjectSlug(projectTitle);
+  const indexStr = String(slideIndex + 1).padStart(2, '0');
+  saveAs(blob, `${slug}-${indexStr}.png`);
 }
 
 /**

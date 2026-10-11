@@ -10,7 +10,7 @@ Permettere a studenti e rappresentanti d'istituto senza competenze grafiche di g
 
 - **Non un clone di Canva**: uno strumento specializzato, veloce, intuitivo, affidabile ed editoriale.
 - **Formato Instagram standard**: Risoluzione nativa **1080 × 1350 pixel** (rapporto 4:5).
-- **Zero lock-in e massima privacy**: Elaborazione immagini e rimozione dello sfondo eseguite **in locale nel browser (WASM)**, senza invio di fotografie di studenti minorenni a servizi terzi.
+- **Elaborazione locale, archivio condiviso**: la rimozione dello sfondo avviene nel browser. In modalità cloud, le fotografie vengono caricate in un bucket Supabase privato e sono accessibili a tutti gli utenti registrati.
 - **Integrazione AI con Gemini**: Assistente intelligente per la generazione strutturata di slide e caption accattivanti a partire da una descrizione in linguaggio naturale.
 
 ---
@@ -117,7 +117,9 @@ Inserisci le tue credenziali (opzionali per il funzionamento manuale/locale):
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 GEMINI_API_KEY=your-gemini-key
-VITE_GEMINI_API_KEY=your-gemini-key
+SUPABASE_SERVER_KEY=your-server-only-secret-key
+AI_USER_DAILY_LIMIT=20
+AI_GLOBAL_DAILY_LIMIT=500
 ```
 
 ### 4. Avvia il server di sviluppo
@@ -125,6 +127,7 @@ VITE_GEMINI_API_KEY=your-gemini-key
 npm run dev
 ```
 L'applicazione sarà attiva all'indirizzo: `http://localhost:5173`
+Con `npm run dev` l'editor e l'archivio funzionano, ma l'endpoint server `/api/ai/generate` richiede l'ambiente Vercel (deploy o sviluppo tramite Vercel CLI).
 
 ### 5. Esegui i test automatici
 ```bash
@@ -143,10 +146,20 @@ npm run build
 1. Crea un nuovo progetto su [Supabase](https://supabase.com).
 2. Vai nella sezione **SQL Editor**.
 3. Incolla ed esegui lo script contenuto nel file `supabase/schema.sql`.
-4. Verrà creata la tabella `projects` protetta da Row Level Security (RLS) e il bucket di storage `gentileschi-media`.
-5. Copia `Project URL` e `anon public key` dalle impostazioni API e incollale nel file `.env`.
+4. Verrà creata la tabella `projects` protetta da Row Level Security (RLS) e il bucket privato `gentileschi-media`.
+5. Copia `Project URL` e la chiave **Publishable** dalle impostazioni API Keys nel file `.env`, rispettivamente in `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. Inserisci la chiave **Secret** in `SUPABASE_SERVER_KEY`, esclusivamente sul server. Il nome dedicato evita conflitti con le variabili gestite da integrazioni Vercel. La funzione AI accetta anche il precedente `SUPABASE_SERVICE_ROLE_KEY` come fallback.
+6. In **Authentication**, abilita l'accesso email e la creazione di nuovi utenti; aggiungi l'URL pubblicato tra gli URL di reindirizzamento consentiti.
+7. Configura un servizio SMTP in **Authentication → Emails → SMTP Settings** prima di aprire la registrazione al pubblico. Il servizio email predefinito Supabase invia soltanto agli indirizzi dei membri del team, attualmente con un limite di 2 email all'ora: [documentazione SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
 
-*Nota*: Se Supabase non è configurato, Gentileschi Studio funziona perfettamente in **Modalità Locale**, memorizzando in modo trasparente e affidabile tutti i progetti in `localStorage`.
+### Progetto collegato
+
+Il progetto cloud `Gentileschi Studio` (`aukspzeknnbhvdhpntiu`) è stato configurato con lo schema di questo repository, bucket privato `gentileschi-media` e accesso condiviso per tutti gli utenti autenticati. I ritorni di autenticazione locali consentiti sono `http://127.0.0.1:5173/` e `http://localhost:5173/`; il Site URL attuale è il primo. Le chiavi esistenti sono salvate nel file `.env` locale, ignorato da Git.
+
+Verificati sul progetto reale: connessione server, rifiuto delle letture dei progetti e della funzione quota AI da parte del ruolo anonimo, chiamata server della funzione quota, bucket privato con limite di 10 MB e MIME PNG/JPEG/WebP. Il build del browser non contiene le chiavi privilegiate o Gemini.
+
+Prima dell'uso pubblico restano da configurare il servizio SMTP e l'URL del sito pubblicato. I test di accesso con due account e di persistenza delle foto nel cloud richiedono questi passaggi o l'accesso di un membro del team tramite email.
+
+*Nota*: senza Supabase, i progetti restano in `localStorage` e le foto in IndexedDB sul dispositivo. Con Supabase configurato, l'accesso via link email è obbligatorio, i progetti sono condivisi tra tutti gli account registrati e le foto sono scaricate tramite sessione autenticata. La dashboard permette di importare esplicitamente i vecchi progetti locali. Le vecchie immagini salvate solo come URL `blob:` non sono recuperabili dopo la chiusura del browser e vanno ricaricate.
 
 ---
 
@@ -167,7 +180,10 @@ npm run build
    - `GEMINI_API_KEY`
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
-4. Clicca su **Deploy**.
+   - `SUPABASE_SERVER_KEY` (solo server, mai con prefisso `VITE_`)
+   - `AI_USER_DAILY_LIMIT` e `AI_GLOBAL_DAILY_LIMIT` se vuoi modificare i limiti predefiniti
+4. Esegui lo schema aggiornato in `supabase/schema.sql`, imposta in Supabase Auth l'URL del sito e i redirect consentiti per i link email, e abilita il provider email.
+5. Clicca su **Deploy**.
 
 ---
 

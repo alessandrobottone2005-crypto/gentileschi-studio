@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { Project, Slide, TemplateType } from '../types/template';
-import { saveProject } from '../services/supabase/projectService';
+import { getProjects, ProjectConflictError, saveProject } from '../services/supabase/projectService';
 import { FormCover } from '../editor/FormCover';
 import { FormAgenda } from '../editor/FormAgenda';
 import { FormNotice } from '../editor/FormNotice';
@@ -26,48 +26,154 @@ import {
 interface EditorPageProps {
   initialProject: Project;
   onBackToDashboard: () => void;
+  onSignOut?: () => void;
 }
+
+// Rapporto minimo di scala (evita divisioni per zero / anteprima invisibile)
+const MIN_PREVIEW_SCALE = 0.05;
+const PREVIEW_BORDER = 4;
 
 export const EditorPage: React.FC<EditorPageProps> = ({
   initialProject,
   onBackToDashboard,
+  onSignOut,
 }) => {
   const [project, setProject] = useState<Project>(initialProject);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving'>('saved');
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error' | 'conflict'>('saved');
+  const [saveError, setSaveError] = useState('');
+  const [retrySaveTick, setRetrySaveTick] = useState(0);
   const [mobileTab, setMobileTab] = useState<'editor' | 'preview'>('editor');
   const [showExportModal, setShowExportModal] = useState(false);
   const [showCaptionModal, setShowCaptionModal] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
   const [previewScale, setPreviewScale] = useState(0.5);
 
-  const previewFrameRef = useRef<HTMLDivElement>(null);
+  const revisionRef = useRef(initialProject.revision);
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const editSequenceRef = useRef(0);
+  const lastObservedRef = useRef({ project: initialProject, retrySaveTick: 0 });
+  const previewStageRef = useRef<HTMLDivElement>(null);
   const offscreenContainerRef = useRef<HTMLDivElement>(null);
   const [offscreenSlide, setOffscreenSlide] = useState<Slide | null>(null);
 
   // Auto-save debounce
   useEffect(() => {
+    if (lastObservedRef.current.project === project && lastObservedRef.current.retrySaveTick === retrySaveTick) return;
+    lastObservedRef.current = { project, retrySaveTick };
+    const sequence = ++editSequenceRef.current;
     setSaveStatus('saving');
-    const timer = setTimeout(async () => {
-      await saveProject(project);
-      setSaveStatus('saved');
+    const timer = setTimeout(() => {
+      saveQueueRef.current = saveQueueRef.current.then(async () => {
+        try {
+          const saved = await saveProject({ ...project, revision: revisionRef.current });
+          revisionRef.current = saved.revision;
+          if (sequence === editSequenceRef.current) {
+            setSaveError('');
+            setSaveStatus('saved');
+          }
+        } catch (error) {
+          if (sequence === editSequenceRef.current) {
+            setSaveError(error instanceof Error ? error.message : 'Salvataggio non riuscito.');
+            setSaveStatus(error instanceof ProjectConflictError ? 'conflict' : 'error');
+          }
+        }
+      });
     }, 700);
 
     return () => clearTimeout(timer);
-  }, [project]);
+  }, [project, retrySaveTick]);
+
+  const leaveEditor = async (onLeave: () => void) => {
+    if (saveStatus === 'error' || saveStatus === 'conflict') return;
+    if (saveStatus === 'saving') {
+      await saveQueueRef.current;
+      try {
+        const saved = await saveProject({ ...project, revision: revisionRef.current });
+        revisionRef.current = saved.revision;
+      } catch (error) {
+        setSaveError(error instanceof Error ? error.message : 'Salvataggio non riuscito.');
+        setSaveStatus(error instanceof ProjectConflictError ? 'conflict' : 'error');
+        return;
+      }
+    }
+    onLeave();
+  };
+
+  const handleBack = () => leaveEditor(onBackToDashboard);
+  const handleSignOut = () => {
+    if (onSignOut) void leaveEditor(onSignOut);
+  };
+
+  useEffect(() => {
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      if (saveStatus !== 'saved') event.preventDefault();
+    };
+    window.addEventListener('beforeunload', beforeUnload);
+    return () => window.removeEventListener('beforeunload', beforeUnload);
+  }, [saveStatus]);
+
+  const reloadProject = async () => {
+    try {
+      const latest = (await getProjects()).find((item) => item.id === project.id);
+      if (!latest) throw new Error('Progetto non trovato.');
+      revisionRef.current = latest.revision;
+      setActiveSlideIndex((index) => Math.min(index, latest.slides.length - 1));
+      lastObservedRef.current = { project: latest, retrySaveTick };
+      setProject(latest);
+      setSaveError('');
+      setSaveStatus('saved');
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Ricarica non riuscita.');
+    }
+  };
+
+  const saveAsCopy = async () => {
+    try {
+      await saveProject({
+        ...project,
+        id: `proj-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        title: `${project.title} (Copia)`,
+        revision: undefined,
+        createdAt: new Date().toISOString(),
+      });
+      onBackToDashboard();
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Copia non salvata.');
+    }
+  };
 
   // Dynamic preview scale calculation
-  useEffect(() => {
-    const handleResize = () => {
-      const containerH = window.innerHeight - 200;
-      const targetScale = Math.min(Math.max(containerH / 1350, 0.28), 0.72);
-      setPreviewScale(targetScale);
+  // Adatta la slide allo spazio realmente disponibile sopra il badge.
+  useLayoutEffect(() => {
+    const stage = previewStageRef.current;
+    if (!stage) return;
+
+    const computeScale = () => {
+      const availableWidth = stage.clientWidth - PREVIEW_BORDER;
+      const availableHeight = stage.clientHeight - PREVIEW_BORDER;
+
+      if (availableWidth <= 0 || availableHeight <= 0) return;
+
+      const fitted = Math.min(availableWidth / 1080, availableHeight / 1350, 1);
+      const next = Math.max(fitted, MIN_PREVIEW_SCALE);
+
+      // Evita loop di rendering inutili: aggiorna solo se la scala è cambiata davvero
+      setPreviewScale((prev) => (Math.abs(prev - next) > 0.002 ? next : prev));
     };
 
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    computeScale();
+
+    const observer =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(computeScale) : null;
+    observer?.observe(stage);
+    window.addEventListener('resize', computeScale);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', computeScale);
+    };
+  }, [mobileTab]);
 
   const currentSlide = project.slides[activeSlideIndex] || project.slides[0];
 
@@ -130,32 +236,37 @@ export const EditorPage: React.FC<EditorPageProps> = ({
     setActiveSlideIndex(0);
   };
 
-  // Render all slides to blobs for ZIP export
+  const renderSlideToBlob = async (index: number): Promise<Blob> => {
+    setOffscreenSlide(project.slides[index]);
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    const frame = offscreenContainerRef.current?.querySelector('[data-template-frame="true"]') as HTMLElement | null;
+    if (!frame) throw new Error('La slide non è pronta per l’esportazione.');
+    await Promise.all(Array.from(frame.querySelectorAll('img')).map((img) => img.decode().catch(() => undefined)));
+    return captureSlideNodeToBlob(frame);
+  };
+
+  const renderCurrentSlideToBlob = async (): Promise<Blob> => {
+    try { return await renderSlideToBlob(activeSlideIndex); }
+    finally { setOffscreenSlide(null); }
+  };
+
   const renderAllSlidesToBlobs = async (): Promise<Array<{ index: number; blob: Blob }>> => {
-    const blobs: Array<{ index: number; blob: Blob }> = [];
-
-    for (let i = 0; i < project.slides.length; i++) {
-      setOffscreenSlide(project.slides[i]);
-      // Small delay for DOM paint and images
-      await new Promise((resolve) => setTimeout(resolve, 250));
-
-      if (offscreenContainerRef.current) {
-        const frame = offscreenContainerRef.current.querySelector('[data-template-frame="true"]') as HTMLElement;
-        if (frame) {
-          const blob = await captureSlideNodeToBlob(frame);
-          blobs.push({ index: i, blob });
-        }
+    try {
+      const blobs: Array<{ index: number; blob: Blob }> = [];
+      for (let index = 0; index < project.slides.length; index++) {
+        blobs.push({ index, blob: await renderSlideToBlob(index) });
       }
+      return blobs;
+    } finally {
+      setOffscreenSlide(null);
     }
-
-    setOffscreenSlide(null);
-    return blobs;
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#0b0e2b', overflow: 'hidden' }}>
       {/* Header Bar */}
       <header
+        className="editor-header"
         style={{
           height: 60,
           backgroundColor: '#10143d',
@@ -165,12 +276,14 @@ export const EditorPage: React.FC<EditorPageProps> = ({
           justifyContent: 'space-between',
           padding: '0 20px',
           zIndex: 100,
+          flexShrink: 0,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div className="editor-header-main" style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
           <button
             type="button"
-            onClick={onBackToDashboard}
+            onClick={handleBack}
+            aria-label="Torna alla dashboard"
             style={{
               background: 'none',
               border: 'none',
@@ -183,13 +296,15 @@ export const EditorPage: React.FC<EditorPageProps> = ({
               fontWeight: 600,
             }}
           >
-            <ArrowLeft size={16} /> Dashboard
+            <ArrowLeft size={16} /> <span className="dashboard-label">Dashboard</span>
           </button>
 
           <div style={{ height: 24, width: 1, backgroundColor: '#232a68' }} />
 
           <input
+            className="editor-project-title"
             type="text"
+            aria-label="Titolo progetto"
             value={project.title}
             onChange={(e) => setProject({ ...project, title: e.target.value })}
             style={{
@@ -207,14 +322,15 @@ export const EditorPage: React.FC<EditorPageProps> = ({
             onBlur={(e) => (e.target.style.backgroundColor = 'transparent')}
           />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: saveStatus === 'saved' ? '#20bf6b' : '#f5cd79' }}>
-            {saveStatus === 'saved' ? <CheckCircle2 size={14} /> : <RefreshCw size={14} className="animate-spin" />}
-            <span>{saveStatus === 'saved' ? 'Salvato' : 'Salvataggio...'}</span>
+          <div className="save-indicator" role="status" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: saveStatus === 'saved' ? '#20bf6b' : saveStatus === 'saving' ? '#f5cd79' : '#ff8e8e' }}>
+            {saveStatus === 'saved' ? <CheckCircle2 size={14} /> : <RefreshCw size={14} className={saveStatus === 'saving' ? 'animate-spin' : ''} />}
+            <span>{saveStatus === 'saved' ? 'Salvato' : saveStatus === 'saving' ? 'Salvataggio...' : 'Non salvato'}</span>
           </div>
+          {onSignOut && <button type="button" onClick={handleSignOut} className="editor-signout" aria-label="Esci dall’account">Esci</button>}
         </div>
 
         {/* Action Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div className="editor-header-actions" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
             type="button"
             onClick={() => setShowAiModal(true)}
@@ -278,6 +394,15 @@ export const EditorPage: React.FC<EditorPageProps> = ({
         </div>
       </header>
 
+      {(saveStatus === 'error' || saveStatus === 'conflict') && (
+        <div role="alert" className="save-banner">
+          <span>{saveError}</span>
+          {saveStatus === 'conflict' ? (
+            <><button type="button" onClick={reloadProject}>Ricarica</button><button type="button" onClick={saveAsCopy}>Salva copia</button></>
+          ) : <button type="button" onClick={() => setRetrySaveTick((count) => count + 1)}>Riprova</button>}
+        </div>
+      )}
+
       {/* Mobile Tab Toggle */}
       <div
         className="mobile-tab-bar"
@@ -289,6 +414,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({
       >
         <button
           type="button"
+          aria-pressed={mobileTab === 'editor'}
           onClick={() => setMobileTab('editor')}
           style={{
             flex: 1,
@@ -307,6 +433,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({
         </button>
         <button
           type="button"
+          aria-pressed={mobileTab === 'preview'}
           onClick={() => setMobileTab('preview')}
           style={{
             flex: 1,
@@ -326,9 +453,13 @@ export const EditorPage: React.FC<EditorPageProps> = ({
       </div>
 
       {/* Main Workspace: Left Editor + Right Live Preview */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div
+        className={`workspace ${mobileTab === 'editor' ? 'mobile-editor' : 'mobile-preview'}`}
+        style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}
+      >
         {/* Left Panel: Form Content Editor */}
         <div
+          className="editor-left-panel"
           style={{
             width: 440,
             backgroundColor: '#0e1236',
@@ -372,34 +503,48 @@ export const EditorPage: React.FC<EditorPageProps> = ({
 
         {/* Right Panel: Live 4:5 Preview */}
         <div
+          className="editor-preview-panel"
           style={{
             flex: 1,
+            minWidth: 0,
+            minHeight: 0,
             backgroundColor: '#070a20',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
             overflow: 'hidden',
             padding: 20,
-            position: 'relative',
           }}
         >
-          {/* Live Preview Container with exact scaling */}
           <div
+            ref={previewStageRef}
             style={{
-              boxShadow: '0 25px 60px rgba(0,0,0,0.7)',
-              borderRadius: 4,
-              overflow: 'hidden',
-              border: '2px solid #232a68',
+              width: '100%',
+              flex: 1,
+              minHeight: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            <TemplateWrapper scale={previewScale} ref={previewFrameRef}>
-              {renderSlideTemplate(currentSlide)}
-            </TemplateWrapper>
+            {/* Live Preview Container with exact scaling */}
+            <div
+              style={{
+                boxShadow: '0 25px 60px rgba(0,0,0,0.7)',
+                borderRadius: 4,
+                overflow: 'hidden',
+                border: '2px solid #232a68',
+                flexShrink: 0,
+              }}
+            >
+          <TemplateWrapper scale={previewScale}>
+                {renderSlideTemplate(currentSlide)}
+              </TemplateWrapper>
+            </div>
           </div>
 
           {/* Scale info badge */}
-          <div style={{ position: 'absolute', bottom: 16, right: 20, fontSize: 11, color: '#8c95c8', backgroundColor: 'rgba(16, 20, 61, 0.8)', padding: '4px 8px', borderRadius: 4 }}>
+          <div style={{ alignSelf: 'flex-end', flexShrink: 0, marginTop: 8, fontSize: 11, color: '#8c95c8', backgroundColor: 'rgba(16, 20, 61, 0.8)', padding: '4px 8px', borderRadius: 4 }}>
             Anteprima 4:5 (1080×1350 px) @ {Math.round(previewScale * 100)}%
           </div>
         </div>
@@ -440,7 +585,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({
         <ExportModal
           project={project}
           activeSlideIndex={activeSlideIndex}
-          slideRef={previewFrameRef}
+          renderCurrentSlideToBlob={renderCurrentSlideToBlob}
           renderAllSlidesToBlobs={renderAllSlidesToBlobs}
           onClose={() => setShowExportModal(false)}
         />

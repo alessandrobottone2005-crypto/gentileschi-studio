@@ -21,6 +21,7 @@ export const FormNotice: React.FC<FormNoticeProps> = ({ content, onChange }) => 
           Titolo Avviso
         </label>
         <input
+          aria-label="Titolo avviso"
           type="text"
           value={content.title}
           onChange={(e) => onChange({ ...content, title: e.target.value })}
@@ -49,6 +50,7 @@ export const FormNotice: React.FC<FormNoticeProps> = ({ content, onChange }) => 
               Cifra Chiave
             </label>
             <input
+              aria-label="Cifra in evidenza"
               type="text"
               value={content.highlightQuantity}
               onChange={(e) => onChange({ ...content, highlightQuantity: e.target.value })}
@@ -71,6 +73,7 @@ export const FormNotice: React.FC<FormNoticeProps> = ({ content, onChange }) => 
               Etichetta / Adesivo
             </label>
             <input
+              aria-label="Testo badge"
               type="text"
               value={content.badgeText}
               onChange={(e) => onChange({ ...content, badgeText: e.target.value })}
@@ -94,6 +97,7 @@ export const FormNotice: React.FC<FormNoticeProps> = ({ content, onChange }) => 
             Descrizione Sintetica Cifra
           </label>
           <textarea
+            aria-label="Descrizione cifra"
             rows={2}
             value={content.highlightLabel}
             onChange={(e) => onChange({ ...content, highlightLabel: e.target.value })}
@@ -118,6 +122,7 @@ export const FormNotice: React.FC<FormNoticeProps> = ({ content, onChange }) => 
           Primo Paragrafo (Spiegazione)
         </label>
         <textarea
+          aria-label="Primo paragrafo"
           rows={3}
           value={content.paragraph1}
           onChange={(e) => onChange({ ...content, paragraph1: e.target.value })}
@@ -143,6 +148,7 @@ export const FormNotice: React.FC<FormNoticeProps> = ({ content, onChange }) => 
           Secondo Paragrafo (Motivazione)
         </label>
         <textarea
+          aria-label="Secondo paragrafo"
           rows={3}
           value={content.paragraph2}
           onChange={(e) => onChange({ ...content, paragraph2: e.target.value })}
@@ -168,6 +174,7 @@ export const FormNotice: React.FC<FormNoticeProps> = ({ content, onChange }) => 
           Testo Sticker Call-To-Action
         </label>
         <input
+          aria-label="Testo sticker call to action"
           type="text"
           value={content.ctaText}
           onChange={(e) => onChange({ ...content, ctaText: e.target.value })}

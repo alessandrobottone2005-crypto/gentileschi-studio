@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Project } from '../types/template';
-import { downloadSingleSlidePng, downloadCarouselZip, captureSlideNodeToBlob, formatProjectSlug } from '../services/export/exportEngine';
+import { downloadSingleSlideBlob, downloadCarouselZip, formatProjectSlug } from '../services/export/exportEngine';
 import { X, Download, Archive, Loader2, CheckCircle2 } from 'lucide-react';
+import { useDialogFocus } from './useDialogFocus';
 
 interface ExportModalProps {
   project: Project;
   activeSlideIndex: number;
-  slideRef: React.RefObject<HTMLDivElement>;
+  renderCurrentSlideToBlob: () => Promise<Blob>;
   renderAllSlidesToBlobs: () => Promise<Array<{ index: number; blob: Blob }>>;
   onClose: () => void;
 }
@@ -14,25 +15,28 @@ interface ExportModalProps {
 export const ExportModal: React.FC<ExportModalProps> = ({
   project,
   activeSlideIndex,
-  slideRef,
+  renderCurrentSlideToBlob,
   renderAllSlidesToBlobs,
   onClose,
 }) => {
   const [isExporting, setIsExporting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [exportComplete, setExportComplete] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const slug = formatProjectSlug(project.title);
+  const dialogRef = useDialogFocus(onClose);
 
   const handleExportCurrent = async () => {
-    if (!slideRef.current) return;
     setIsExporting(true);
+    setErrorMessage('');
     setStatusMessage('Rendering slide ad alta risoluzione (1080×1350)...');
     try {
-      await downloadSingleSlidePng(slideRef.current, project.title, activeSlideIndex);
+      const blob = await renderCurrentSlideToBlob();
+      downloadSingleSlideBlob(blob, project.title, activeSlideIndex);
       setExportComplete(true);
-    } catch (err: any) {
-      alert(`Errore esportazione: ${err.message}`);
+    } catch (err) {
+      setErrorMessage(`Errore esportazione: ${err instanceof Error ? err.message : 'Impossibile caricare una risorsa della slide.'}`);
     } finally {
       setIsExporting(false);
       setStatusMessage('');
@@ -41,6 +45,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
   const handleExportAllZip = async () => {
     setIsExporting(true);
+    setErrorMessage('');
     setStatusMessage('Elaborazione di tutte le slide del carosello in corso...');
     try {
       const blobs = await renderAllSlidesToBlobs();
@@ -48,8 +53,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         setStatusMessage(p.statusText);
       });
       setExportComplete(true);
-    } catch (err: any) {
-      alert(`Errore esportazione ZIP: ${err.message}`);
+    } catch (err) {
+      setErrorMessage(`Errore esportazione ZIP: ${err instanceof Error ? err.message : 'Impossibile caricare una risorsa della slide.'}`);
     } finally {
       setIsExporting(false);
       setStatusMessage('');
@@ -71,6 +76,11 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       }}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="export-title"
+        tabIndex={-1}
         style={{
           width: '100%',
           maxWidth: 520,
@@ -85,11 +95,12 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ fontFamily: "'Archivo Black', sans-serif", fontSize: 20, color: '#dfff2f', margin: 0 }}>
+          <h2 id="export-title" style={{ fontFamily: "'Archivo Black', sans-serif", fontSize: 20, color: '#dfff2f', margin: 0 }}>
             Esporta Post Instagram
           </h2>
           <button
             type="button"
+            aria-label="Chiudi esportazione"
             onClick={onClose}
             style={{ background: 'none', border: 'none', color: '#8c95c8', cursor: 'pointer' }}
           >
@@ -119,6 +130,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             <span>File scaricato con successo! Pronto per la pubblicazione.</span>
           </div>
         )}
+
+        {errorMessage && <div role="alert" className="app-error">{errorMessage}</div>}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {/* Export Current */}

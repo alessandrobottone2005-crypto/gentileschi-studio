@@ -3,6 +3,7 @@ import { Slide } from '../types/template';
 import { generateCarouselWithAi } from '../services/ai/geminiService';
 import { AiGeneratedCarouselResponse } from '../services/ai/schemas';
 import { X, Sparkles, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { useDialogFocus } from './useDialogFocus';
 
 interface AiGeneratorModalProps {
   onApplyGenerated: (title: string, slides: Slide[], caption: string) => void;
@@ -22,6 +23,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<AiGeneratedCarouselResponse | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const dialogRef = useDialogFocus(onClose);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -66,6 +68,11 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
       }}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ai-title"
+        tabIndex={-1}
         style={{
           width: '100%',
           maxWidth: 640,
@@ -84,12 +91,13 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Sparkles size={22} color="#dfff2f" />
-            <h2 style={{ fontFamily: "'Archivo Black', sans-serif", fontSize: 20, color: '#ffffff', margin: 0 }}>
+            <h2 id="ai-title" style={{ fontFamily: "'Archivo Black', sans-serif", fontSize: 20, color: '#ffffff', margin: 0 }}>
               Generazione Carosello con AI
             </h2>
           </div>
           <button
             type="button"
+            aria-label="Chiudi assistente AI"
             onClick={onClose}
             style={{ background: 'none', border: 'none', color: '#8c95c8', cursor: 'pointer' }}
           >
@@ -102,6 +110,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
         </p>
 
         <textarea
+          aria-label="Descrizione per generare il carosello"
           rows={5}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}

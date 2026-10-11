@@ -30,6 +30,7 @@ export const FormCover: React.FC<FormCoverProps> = ({ content, onChange }) => {
           Titolo Assemblea (vai a capo per dividere le righe)
         </label>
         <textarea
+          aria-label="Titolo assemblea"
           rows={2}
           value={content.title}
           onChange={(e) => onChange({ ...content, title: e.target.value })}
@@ -56,6 +57,7 @@ export const FormCover: React.FC<FormCoverProps> = ({ content, onChange }) => {
           <Calendar size={16} /> Selettore Data Rapido (Italiano)
         </label>
         <input
+          aria-label="Data assemblea"
           type="date"
           onChange={handleDateChange}
           style={{
@@ -80,6 +82,7 @@ export const FormCover: React.FC<FormCoverProps> = ({ content, onChange }) => {
             Giorno (es. 02)
           </label>
           <input
+            aria-label="Giorno assemblea"
             type="text"
             maxLength={3}
             value={content.day}
@@ -103,6 +106,7 @@ export const FormCover: React.FC<FormCoverProps> = ({ content, onChange }) => {
             Mese (es. OTTOBRE)
           </label>
           <input
+            aria-label="Mese assemblea"
             type="text"
             value={content.month}
             onChange={(e) => onChange({ ...content, month: e.target.value.toUpperCase() })}
@@ -126,6 +130,7 @@ export const FormCover: React.FC<FormCoverProps> = ({ content, onChange }) => {
           Orario Assemblea
         </label>
         <textarea
+          aria-label="Orario assemblea"
           rows={2}
           value={content.timeSlot}
           onChange={(e) => onChange({ ...content, timeSlot: e.target.value })}

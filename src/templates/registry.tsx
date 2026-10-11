@@ -3,6 +3,7 @@ import { TemplateType, Slide } from '../types/template';
 import { TemplateCover } from './TemplateCover';
 import { TemplateAgenda } from './TemplateAgenda';
 import { TemplateNotice } from './TemplateNotice';
+import { TEMPLATE_THUMBNAILS } from '../engine/defaultAssets';
 import {
   validateCoverContent,
   validateAgendaContent,
@@ -32,7 +33,7 @@ export const TEMPLATE_REGISTRY: Record<TemplateType, TemplateDefinition<any>> = 
     name: "Copertina Assemblea",
     category: 'cover',
     description: "Slide principale con data grande, orario, titolo e statua/ritaglio fotografico.",
-    thumbnailUrl: "/src/assets/figma/reference-4_2758.png",
+    thumbnailUrl: TEMPLATE_THUMBNAILS.cover,
     component: TemplateCover,
     defaultContent: DEFAULT_COVER_CONTENT,
     validate: validateCoverContent,
@@ -42,7 +43,7 @@ export const TEMPLATE_REGISTRY: Record<TemplateType, TemplateDefinition<any>> = 
     name: "Ordine del Giorno (O.D.G.)",
     category: 'content',
     description: "Slide per l'elenco dei punti di discussione con badge numerati ed elemento in evidenza.",
-    thumbnailUrl: "/src/assets/figma/reference-4_2791.png",
+    thumbnailUrl: TEMPLATE_THUMBNAILS.agenda,
     component: TemplateAgenda,
     defaultContent: DEFAULT_AGENDA_CONTENT,
     validate: (c) => validateAgendaContent(c.items || []),
@@ -52,7 +53,7 @@ export const TEMPLATE_REGISTRY: Record<TemplateType, TemplateDefinition<any>> = 
     name: "Avviso Importante / Regola",
     category: 'notice',
     description: "Slide per comunicazioni istituzionali con cifra in evidenza, etichetta e sticker CTA.",
-    thumbnailUrl: "/src/assets/figma/reference-4_2838.png",
+    thumbnailUrl: TEMPLATE_THUMBNAILS.notice,
     component: TemplateNotice,
     defaultContent: DEFAULT_NOTICE_CONTENT,
     validate: validateNoticeContent,

@@ -1,4 +1,5 @@
 import { Slide, CoverSlideContent, AgendaSlideContent, NoticeSlideContent, Project } from '../types/template';
+import { DEFAULT_IMAGES } from './defaultAssets';
 
 export const DEFAULT_COVER_CONTENT: CoverSlideContent = {
   title: "ASSEMBLEA\nD’ISTITUTO",
@@ -6,7 +7,8 @@ export const DEFAULT_COVER_CONTENT: CoverSlideContent = {
   month: "OTTOBRE",
   timeSlot: "DALLE ORE 10:00\nALLE ORE 13:00",
   image: {
-    url: "/src/assets/figma/gentileschi-statue.png",
+    assetKey: 'cover',
+    url: DEFAULT_IMAGES.cover,
     scale: 1,
     posX: 0,
     posY: 0,
@@ -24,7 +26,8 @@ export const DEFAULT_AGENDA_CONTENT: AgendaSlideContent = {
     { id: '5', number: '05', text: 'Varie ed eventuali' },
   ],
   image: {
-    url: "/src/assets/figma/airplane-trip.png",
+    assetKey: 'agenda',
+    url: DEFAULT_IMAGES.agenda,
     scale: 1,
     posX: 0,
     posY: 0,
@@ -40,7 +43,8 @@ export const DEFAULT_NOTICE_CONTENT: NoticeSlideContent = {
   paragraph2: "Non è un’imposizione, ma una condizione fondamentale per garantire la partecipazione e portare avanti in modo serio e democratico l’assemblea d’istituto.",
   ctaText: "PARTECIPARE FA LA DIFFERENZA",
   image: {
-    url: "/src/assets/figma/students-group.png",
+    assetKey: 'notice',
+    url: DEFAULT_IMAGES.notice,
     scale: 1,
     posX: 0,
     posY: 0,

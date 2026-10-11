@@ -1,103 +1,92 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
+import { z } from 'zod';
+import { AiGeneratedCarouselResponseSchema } from '../../src/services/ai/schemas';
 
-const SYSTEM_PROMPT = `Sei l'assistente AI ufficiale dei Rappresentanti degli Studenti del Liceo Gentileschi di Napoli.
-Il tuo compito è analizzare la richiesta dell'utente e generare un carosello Instagram strutturato per "Gentileschi Studio".
+const carouselInput = z.object({ mode: z.literal('carousel'), prompt: z.string().trim().min(1).max(6000) });
+const captionInput = z.object({
+  mode: z.literal('caption'),
+  projectTitle: z.string().trim().min(1).max(200),
+  slidesSummary: z.string().trim().min(1).max(12000),
+});
+const inputSchema = z.discriminatedUnion('mode', [carouselInput, captionInput]);
 
-REGOLE CRUCIALI:
-1. NON inventare mai informazioni ufficiali non fornite (date, orari precisi, regole). Se mancano, segnalalo nel campo "missingInformation".
-2. Mantieni lo stile di comunicazione fresco, autorevole, rispettoso ma vicino agli studenti del liceo (tono accattivante, energico, in italiano).
-3. I template disponibili sono SOLO 3, usa ESCLUSIVAMENTE questi valori per templateType:
-   - "cover": Titolo (es. "ASSEMBLEA D'ISTITUTO"), giorno (es. "20"), mese (in maiuscolo, es. "NOVEMBRE"), timeSlot (es. "DALLE ORE 10:00\\nALLE ORE 13:00").
-   - "agenda": Titolo (default "O.D.G."), subtitle ("ORDINE DEL GIORNO"), items (array di { id: string, number: "01", text: string, isHighlight?: boolean }).
-   - "notice": Slide per comunicazioni importanti o regole. highlightQuantity (es. "2"), highlightLabel (es. "STUDENTI\\nPER CLASSE"), badgeText ("NUOVA REGOLA"), paragraph1, paragraph2, ctaText ("PARTECIPARE FA LA DIFFERENZA").
-4. Genera sempre una caption Instagram completa e coinvolgente con emoji e hashtag pertinenti (#LiceoGentileschi, #StudentiNapoli, #AssembleaDiIstituto).
-5. Rispondi ESCLUSIVAMENTE in formato JSON valido aderente al seguente schema:
-{
-  "projectTitle": "Titolo Carosello",
-  "slides": [
-    { "templateType": "cover", "content": { "title": "...", "day": "...", "month": "...", "timeSlot": "..." } },
-    { "templateType": "agenda", "content": { "title": "O.D.G.", "subtitle": "ORDINE DEL GIORNO", "items": [{ "id": "1", "number": "01", "text": "...", "isHighlight": false }] } },
-    { "templateType": "notice", "content": { "title": "IMPORTANTE!", "highlightQuantity": "2", "highlightLabel": "RAPPRESENTANTI", "badgeText": "NUOVA REGOLA", "paragraph1": "...", "paragraph2": "...", "ctaText": "..." } }
-  ],
-  "missingInformation": [],
-  "caption": "testo caption"
-}`;
+const CAROUSEL_PROMPT = `Sei l'assistente dei rappresentanti del Liceo Gentileschi. Crea un carosello Instagram in italiano usando solo i template cover, agenda e notice. Non inventare date, orari o regole: segnala le informazioni mancanti in missingInformation. Rispondi solo con JSON valido nella forma {"projectTitle":"...","slides":[{"templateType":"cover","content":{"title":"...","day":"...","month":"...","timeSlot":"..."}},{"templateType":"agenda","content":{"title":"O.D.G.","subtitle":"ORDINE DEL GIORNO","items":[{"id":"1","number":"01","text":"...","isHighlight":false}]}},{"templateType":"notice","content":{"title":"IMPORTANTE!","highlightQuantity":"2","highlightLabel":"STUDENTI PER CLASSE","badgeText":"NUOVA REGOLA","paragraph1":"...","paragraph2":"...","ctaText":"PARTECIPARE FA LA DIFFERENZA"}}],"missingInformation":[],"caption":"..."}.`;
+const CAPTION_PROMPT = `Scrivi una caption Instagram chiara e coinvolgente in italiano per i rappresentanti del Liceo Gentileschi. Non inventare date, orari o fatti. Restituisci solo il testo della caption.`;
+const MODELS = ['gemini-3.8-flash', 'gemini-3.6-flash'];
 
-function extractJson(rawText: string): string {
-  const trimmed = rawText.trim();
-  const codeBlockMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-  if (codeBlockMatch) {
-    return codeBlockMatch[1].trim();
-  }
-  return trimmed;
+function dailyLimit(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-const SUPPORTED_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash'];
+function parseJson(text: string): unknown {
+  const trimmed = text.trim();
+  const match = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  return JSON.parse(match ? match[1] : trimmed);
+}
+
+async function generateWithGemini(apiKey: string, prompt: string, json: boolean): Promise<string> {
+  let lastError = 'Il servizio AI non è disponibile.';
+  for (const model of MODELS) {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { temperature: json ? 0.2 : 0.7, ...(json ? { responseMimeType: 'application/json' } : {}) },
+      }),
+    });
+    if (response.ok) {
+      const result = await response.json();
+      const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (typeof text === 'string' && text.trim()) return text.trim();
+      lastError = 'Risposta AI vuota.';
+      continue;
+    }
+    lastError = `Errore del servizio AI (${response.status}).`;
+    if (![404, 429, 503].includes(response.status)) break;
+  }
+  throw new Error(lastError);
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Metodo non consentito' });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Metodo non consentito.' });
+  const input = inputSchema.safeParse(req.body);
+  if (!input.success) return res.status(400).json({ error: 'Richiesta non valida.' });
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({
-      error: 'GEMINI_API_KEY non configurata sul server.',
-    });
-  }
+  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+  const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+  const serviceKey = process.env.SUPABASE_SERVER_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (!url || !anonKey || !serviceKey || !geminiKey) return res.status(503).json({ error: 'Servizio AI non configurato.' });
 
-  const { prompt } = req.body;
-  if (!prompt || typeof prompt !== 'string') {
-    return res.status(400).json({ error: 'Prompt mancante o non valido.' });
-  }
+  const token = req.headers.authorization?.match(/^Bearer (.+)$/i)?.[1];
+  if (!token) return res.status(401).json({ error: 'Accedi per usare l’assistente AI.' });
+  const authClient = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data: { user }, error: authError } = await authClient.auth.getUser(token);
+  if (authError || !user) return res.status(401).json({ error: 'Sessione non valida.' });
 
-  const requestBody = {
-    contents: [
-      {
-        role: 'user',
-        parts: [{ text: `${SYSTEM_PROMPT}\n\nRichiesta utente:\n${prompt}` }],
-      },
-    ],
-    generationConfig: {
-      responseMimeType: 'application/json',
-      temperature: 0.2,
-    },
-  };
+  const adminClient = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  const userLimit = dailyLimit(process.env.AI_USER_DAILY_LIMIT, 20);
+  const globalLimit = dailyLimit(process.env.AI_GLOBAL_DAILY_LIMIT, 500);
+  const { data: allowed, error: quotaError } = await adminClient.rpc('consume_ai_quota', {
+    p_user_id: user.id,
+    p_user_limit: userLimit,
+    p_global_limit: globalLimit,
+  });
+  if (quotaError) return res.status(503).json({ error: 'Limite AI non disponibile. Riprova più tardi.' });
+  if (!allowed) return res.status(429).json({ error: 'Limite giornaliero AI raggiunto. Riprova domani.' });
 
-  let lastError = 'Errore sconosciuto nella generazione';
-
-  for (const model of SUPPORTED_MODELS) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        lastError = `Gemini API [${model}] (${response.status}): ${errText}`;
-        if (response.status === 503 || response.status === 429 || response.status === 404) {
-          continue; // Prova modello alternativo
-        }
-        return res.status(response.status).json({ error: lastError });
-      }
-
-      const data = await response.json();
-      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) {
-        lastError = 'Nessun testo generato dalla risposta AI.';
-        continue;
-      }
-
-      const cleanJson = extractJson(rawText);
-      const parsed = JSON.parse(cleanJson);
-      return res.status(200).json(parsed);
-    } catch (err: any) {
-      lastError = err.message || 'Errore durante la chiamata a Gemini.';
+  try {
+    if (input.data.mode === 'carousel') {
+      const text = await generateWithGemini(geminiKey, `${CAROUSEL_PROMPT}\n\nRichiesta: ${input.data.prompt}`, true);
+      return res.status(200).json(AiGeneratedCarouselResponseSchema.parse(parseJson(text)));
     }
+    const text = await generateWithGemini(geminiKey,
+      `${CAPTION_PROMPT}\n\nTitolo: ${input.data.projectTitle}\nSlide: ${input.data.slidesSummary}`, false);
+    return res.status(200).json({ caption: text });
+  } catch (error) {
+    return res.status(502).json({ error: error instanceof Error ? error.message : 'Generazione non riuscita.' });
   }
-
-  return res.status(500).json({ error: lastError });
 }

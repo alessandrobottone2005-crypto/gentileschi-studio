@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Project } from '../types/template';
 import { generateCaptionWithAi } from '../services/ai/geminiService';
 import { X, Copy, Check, Sparkles, Loader2, MessageSquare } from 'lucide-react';
+import { useDialogFocus } from './useDialogFocus';
 
 interface CaptionModalProps {
   project: Project;
@@ -18,6 +19,7 @@ export const CaptionModal: React.FC<CaptionModalProps> = ({
   const [isCopied, setIsCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const dialogRef = useDialogFocus(onClose);
 
   const handleCopy = async () => {
     if (!caption) return;
@@ -32,7 +34,10 @@ export const CaptionModal: React.FC<CaptionModalProps> = ({
 
     // summarize slides
     const summary = project.slides
-      .map((s, i) => `Slide ${i + 1} (${s.templateType}): ${JSON.stringify(s.content)}`)
+      .map((s, i) => {
+        const { image: _image, ...textContent } = s.content as typeof s.content & { image?: unknown };
+        return `Slide ${i + 1} (${s.templateType}): ${JSON.stringify(textContent)}`;
+      })
       .join('\n');
 
     try {
@@ -61,6 +66,11 @@ export const CaptionModal: React.FC<CaptionModalProps> = ({
       }}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="caption-title"
+        tabIndex={-1}
         style={{
           width: '100%',
           maxWidth: 580,
@@ -77,12 +87,13 @@ export const CaptionModal: React.FC<CaptionModalProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <MessageSquare size={20} color="#dfff2f" />
-            <h2 style={{ fontFamily: "'Archivo Black', sans-serif", fontSize: 20, color: '#ffffff', margin: 0 }}>
+            <h2 id="caption-title" style={{ fontFamily: "'Archivo Black', sans-serif", fontSize: 20, color: '#ffffff', margin: 0 }}>
               Caption Instagram
             </h2>
           </div>
           <button
             type="button"
+            aria-label="Chiudi caption"
             onClick={onClose}
             style={{ background: 'none', border: 'none', color: '#8c95c8', cursor: 'pointer' }}
           >
@@ -95,6 +106,7 @@ export const CaptionModal: React.FC<CaptionModalProps> = ({
         </p>
 
         <textarea
+          aria-label="Caption Instagram"
           rows={8}
           value={caption}
           onChange={(e) => {

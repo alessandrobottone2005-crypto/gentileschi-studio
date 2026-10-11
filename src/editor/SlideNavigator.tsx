@@ -24,6 +24,7 @@ export const SlideNavigator: React.FC<SlideNavigatorProps> = ({
   onReorderSlide,
 }) => {
   const [showAddMenu, setShowAddMenu] = React.useState(false);
+  const [showActionsMenu, setShowActionsMenu] = React.useState(false);
 
   const handleAddNew = (type: TemplateType) => {
     const s = createDefaultSlide(type);
@@ -32,13 +33,23 @@ export const SlideNavigator: React.FC<SlideNavigatorProps> = ({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '12px 16px', backgroundColor: '#0f1338', borderTop: '1px solid #232a68' }}>
+    <div className="slide-navigator" style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '12px 16px', backgroundColor: '#0f1338', borderTop: '1px solid #232a68', flexShrink: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: '#dfff2f', textTransform: 'uppercase' }}>
           Slide del Carosello ({slides.length})
         </span>
 
         {/* Add slide dropdown */}
+        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="mobile-slide-menu" style={{ position: 'relative' }}>
+          <button type="button" className="secondary-action" aria-expanded={showActionsMenu} onClick={() => setShowActionsMenu(!showActionsMenu)}>Azioni</button>
+          {showActionsMenu && <div className="mobile-slide-actions">
+            <button type="button" disabled={activeSlideIndex === 0} onClick={() => { onReorderSlide(activeSlideIndex, 'prev'); setShowActionsMenu(false); }}>Sposta prima</button>
+            <button type="button" disabled={activeSlideIndex === slides.length - 1} onClick={() => { onReorderSlide(activeSlideIndex, 'next'); setShowActionsMenu(false); }}>Sposta dopo</button>
+            <button type="button" onClick={() => { onDuplicateSlide(activeSlideIndex); setShowActionsMenu(false); }}>Duplica slide</button>
+            <button type="button" disabled={slides.length <= 1} onClick={() => { onDeleteSlide(activeSlideIndex); setShowActionsMenu(false); }}>Elimina slide</button>
+          </div>}
+        </div>
         <div style={{ position: 'relative' }}>
           <button
             type="button"
@@ -109,10 +120,11 @@ export const SlideNavigator: React.FC<SlideNavigatorProps> = ({
             </div>
           )}
         </div>
+        </div>
       </div>
 
       {/* Slide Thumbnails List */}
-      <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6 }}>
+      <div className="slide-list" style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6 }}>
         {slides.map((slide, index) => {
           const isActive = index === activeSlideIndex;
           const templateDef = TEMPLATE_REGISTRY[slide.templateType];
@@ -128,7 +140,11 @@ export const SlideNavigator: React.FC<SlideNavigatorProps> = ({
                 flexShrink: 0,
               }}
             >
-              <div
+              <button
+                type="button"
+                className="slide-thumb"
+                aria-label={`Apri slide ${index + 1}: ${templateDef.name}`}
+                aria-current={isActive ? 'true' : undefined}
                 onClick={() => onSelectSlide(index)}
                 style={{
                   width: 72,
@@ -144,6 +160,7 @@ export const SlideNavigator: React.FC<SlideNavigatorProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   transition: 'all 0.15s ease',
+                  padding: 0,
                 }}
               >
                 <img
@@ -167,13 +184,14 @@ export const SlideNavigator: React.FC<SlideNavigatorProps> = ({
                 >
                   #{index + 1}
                 </span>
-              </div>
+              </button>
 
               {/* Actions for active slide */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <div className="slide-actions" style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <button
                   type="button"
                   title="Sposta prima"
+                  aria-label={`Sposta slide ${index + 1} prima`}
                   disabled={index === 0}
                   onClick={() => onReorderSlide(index, 'prev')}
                   style={{ background: 'none', border: 'none', color: index === 0 ? '#333b70' : '#8c95c8', cursor: index === 0 ? 'default' : 'pointer', padding: 2 }}
@@ -184,6 +202,7 @@ export const SlideNavigator: React.FC<SlideNavigatorProps> = ({
                 <button
                   type="button"
                   title="Duplica slide"
+                  aria-label={`Duplica slide ${index + 1}`}
                   onClick={() => onDuplicateSlide(index)}
                   style={{ background: 'none', border: 'none', color: '#8c95c8', cursor: 'pointer', padding: 2 }}
                 >
@@ -194,6 +213,7 @@ export const SlideNavigator: React.FC<SlideNavigatorProps> = ({
                   <button
                     type="button"
                     title="Elimina slide"
+                    aria-label={`Elimina slide ${index + 1}`}
                     onClick={() => onDeleteSlide(index)}
                     style={{ background: 'none', border: 'none', color: '#ff6b6b', cursor: 'pointer', padding: 2 }}
                   >
@@ -204,6 +224,7 @@ export const SlideNavigator: React.FC<SlideNavigatorProps> = ({
                 <button
                   type="button"
                   title="Sposta dopo"
+                  aria-label={`Sposta slide ${index + 1} dopo`}
                   disabled={index === slides.length - 1}
                   onClick={() => onReorderSlide(index, 'next')}
                   style={{ background: 'none', border: 'none', color: index === slides.length - 1 ? '#333b70' : '#8c95c8', cursor: index === slides.length - 1 ? 'default' : 'pointer', padding: 2 }}
