@@ -94,15 +94,15 @@ describe('Template Registry & Project Factory', () => {
   it('crea slide con dati predefiniti validi', () => {
     const slideCover = createDefaultSlide('cover');
     expect(slideCover.templateType).toBe('cover');
-    expect(slideCover.content.title).toContain('ASSEMBLEA');
+    expect((slideCover.content as any).title).toContain('ASSEMBLEA');
 
     const slideAgenda = createDefaultSlide('agenda');
     expect(slideAgenda.templateType).toBe('agenda');
-    expect(slideAgenda.content.items).toHaveLength(5);
+    expect((slideAgenda.content as any).items).toHaveLength(5);
 
     const slideNotice = createDefaultSlide('notice');
     expect(slideNotice.templateType).toBe('notice');
-    expect(slideNotice.content.highlightQuantity).toBe('2');
+    expect((slideNotice.content as any).highlightQuantity).toBe('2');
   });
 
   it('crea un progetto carosello completo con slide ordinate', () => {
