@@ -1,0 +1,47 @@
+:root {
+  /* Core Palette from Figma */
+  --color-electric-blue: #1728e8;
+  --color-dark-navy: #10143d;
+  --color-deep-blue: #10108c;
+  --color-cobalt-blue: #304bff;
+  --color-soft-blue: #7b88ff;
+  --color-acid-lime: #dfff2f;
+  --color-warm-white: #f4f0e6;
+  --color-pure-white: #ffffff;
+
+  /* Neutrals & Dark Text */
+  --color-text-dark: #10143d;
+  --color-text-light: #ffffff;
+  --color-text-muted: #5e6482;
+
+  /* Typography */
+  --font-display: 'Archivo Black', system-ui, sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
+  --font-hand: 'Comic Neue', cursive;
+
+  /* Effects */
+  --shadow-hard: 12px 16px 0px rgba(8, 13, 92, 0.26);
+  --shadow-hard-dark: 12px 16px 0px rgba(8, 13, 92, 0.30);
+  --shadow-hard-sm: 6px 8px 0px rgba(8, 13, 92, 0.20);
+
+  /* Dimensions */
+  --slide-width: 1080px;
+  --slide-height: 1350px;
+  --slide-aspect: 4 / 5;
+}
+
+/* Base resets & utilities */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #0b0e2b;
+  color: var(--color-warm-white);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
