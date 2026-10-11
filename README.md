@@ -88,7 +88,7 @@ Estratto fedelmente dal file Figma originale:
 - **Styling**: CSS Variables + Modern CSS
 - **Esportazione**: `html-to-image`, `jszip`, `file-saver`
 - **Elaborazione Immagini**: `@imgly/background-removal` (WASM / ONNX locale)
-- **AI**: `@google/genai` (Gemini 2.5 Flash), `zod`
+- **AI**: Gemini 3.8 Flash con fallback Gemini 3.6 Flash, risposte strutturate JSON e validazione `zod` sul server
 - **Backend / Database**: Supabase (PostgreSQL, Row Level Security, Storage)
 - **Testing**: Vitest, Playwright
 
@@ -173,6 +173,10 @@ I modelli di conferma registrazione e link di accesso sono in italiano; le copie
 2. Aggiungi la chiave nel file `.env`:
    - `GEMINI_API_KEY=AIzaSy...`
 3. Nel caso di deploy su Vercel, aggiungi `GEMINI_API_KEY` nelle **Environment Variables** del progetto su Vercel: le chiamate passeranno dalla Serverless Function protetta in `api/ai/generate.ts`.
+
+L'Assistente AI richiede la **Data dell'evento** scelta nel calendario, oltre alla descrizione. La data selezionata prevale su quelle presenti nel testo: il server calcola giorno e mese delle copertine prima della validazione finale. Date mancanti o impossibili sono rifiutate prima di chiamare Gemini o consumare quota. Le richieste `carousel` all'endpoint `/api/ai/generate` devono includere `eventDate` nel formato `YYYY-MM-DD`; le richieste `caption` mantengono il contratto precedente.
+
+Il carosello è richiesto a Gemini con uno schema strutturato per cover, agenda e notice. Se il JSON o altri campi non sono validi, il server effettua un solo tentativo di correzione nella stessa richiesta e senza una seconda quota applicativa. Un secondo errore produce un messaggio leggibile; i log riportano soltanto codici e percorsi dei campi invalidi. Il progetto cambia solo premendo **Applica al Progetto**. L'avvio locale con `npm run dev` serve l'interfaccia; questa configurazione AI viene eseguita dalle funzioni del sito Vercel.
 
 ---
 

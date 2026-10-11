@@ -1,9 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { AiGeneratedCarouselResponseSchema } from '../../src/services/ai/schemas.js';
+import { generateValidCarousel, InvalidCarouselResponseError } from '../../src/services/ai/carouselResponse.js';
+import { isValidEventDate } from '../../src/engine/dateUtils.js';
 
-const carouselInput = z.object({ mode: z.literal('carousel'), prompt: z.string().trim().min(1).max(6000) });
+const carouselInput = z.object({
+  mode: z.literal('carousel'), prompt: z.string().trim().min(1).max(6000),
+  eventDate: z.string().refine(isValidEventDate),
+});
 const captionInput = z.object({
   mode: z.literal('caption'),
   projectTitle: z.string().trim().min(1).max(200),
@@ -20,40 +24,42 @@ function dailyLimit(value: string | undefined, fallback: number): number {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-function parseJson(text: string): unknown {
-  const trimmed = text.trim();
-  const match = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-  return JSON.parse(match ? match[1] : trimmed);
-}
+class AiProviderError extends Error {}
 
-async function generateWithGemini(apiKey: string, prompt: string, json: boolean): Promise<string> {
+async function generateWithGemini(apiKey: string, prompt: string, schema?: Record<string, unknown>): Promise<string> {
   let lastError = 'Il servizio AI non è disponibile.';
   for (const model of MODELS) {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { temperature: json ? 0.2 : 0.7, ...(json ? { responseMimeType: 'application/json' } : {}) },
+        generationConfig: { temperature: schema ? 0.2 : 0.7, ...(schema ? { responseMimeType: 'application/json', responseJsonSchema: schema } : {}) },
       }),
     });
     if (response.ok) {
       const result = await response.json();
-      const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+      const text = result.candidates?.[0]?.content?.parts
+        ?.filter((part: { text?: unknown; thought?: boolean }) => !part.thought && typeof part.text === 'string')
+        .map((part: { text: string }) => part.text).join('');
       if (typeof text === 'string' && text.trim()) return text.trim();
+      if (schema) return ''; // Empty structured output gets the same bounded repair.
       lastError = 'Risposta AI vuota.';
       continue;
     }
     lastError = `Errore del servizio AI (${response.status}).`;
     if (![404, 429, 503].includes(response.status)) break;
   }
-  throw new Error(lastError);
+  throw new AiProviderError(lastError);
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Metodo non consentito.' });
   const input = inputSchema.safeParse(req.body);
-  if (!input.success) return res.status(400).json({ error: 'Richiesta non valida.' });
+  if (!input.success) {
+    const invalidDate = input.error.issues.some((issue) => issue.path[0] === 'eventDate');
+    return res.status(400).json({ error: invalidDate ? 'Scegli una data dell’evento valida prima di generare.' : 'Richiesta non valida.' });
+  }
 
   const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
   const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
@@ -80,13 +86,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     if (input.data.mode === 'carousel') {
-      const text = await generateWithGemini(geminiKey, `${CAROUSEL_PROMPT}\n\nRichiesta: ${input.data.prompt}`, true);
-      return res.status(200).json(AiGeneratedCarouselResponseSchema.parse(parseJson(text)));
+      const { eventDate, prompt } = input.data;
+      const generationPrompt = `${CAROUSEL_PROMPT}\n\nLa data autorevole dell’evento è ${eventDate}. Usala anche nei testi e nella caption; prevale su qualsiasi data diversa nella richiesta. Non indicare questa data come informazione mancante.\n\nRichiesta: ${prompt}`;
+      const result = await generateValidCarousel(generationPrompt, eventDate,
+        (text, schema) => generateWithGemini(geminiKey, text, schema));
+      return res.status(200).json(result);
     }
     const text = await generateWithGemini(geminiKey,
-      `${CAPTION_PROMPT}\n\nTitolo: ${input.data.projectTitle}\nSlide: ${input.data.slidesSummary}`, false);
+      `${CAPTION_PROMPT}\n\nTitolo: ${input.data.projectTitle}\nSlide: ${input.data.slidesSummary}`);
     return res.status(200).json({ caption: text });
   } catch (error) {
-    return res.status(502).json({ error: error instanceof Error ? error.message : 'Generazione non riuscita.' });
+    return res.status(502).json({ error: error instanceof InvalidCarouselResponseError || error instanceof AiProviderError
+      ? error.message : 'Generazione non riuscita. Riprova.' });
   }
 }

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export const INVALID_CAROUSEL_MESSAGE = 'L’AI ha restituito una bozza non valida. Riprova.';
+
 export const CoverContentSchema = z.object({
   title: z.string().min(1),
   day: z.string().min(1).max(4),

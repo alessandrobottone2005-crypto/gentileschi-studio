@@ -4,6 +4,7 @@ import { generateCarouselWithAi } from '../services/ai/geminiService';
 import { AiGeneratedCarouselResponse } from '../services/ai/schemas';
 import { X, Sparkles, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { useDialogFocus } from './useDialogFocus';
+import { isValidEventDate } from '../engine/dateUtils';
 
 interface AiGeneratorModalProps {
   onApplyGenerated: (title: string, slides: Slide[], caption: string) => void;
@@ -20,19 +21,21 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
   onClose,
 }) => {
   const [prompt, setPrompt] = useState(EXAMPLE_PROMPT);
+  const [eventDate, setEventDate] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<AiGeneratedCarouselResponse | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
   const dialogRef = useDialogFocus(onClose);
+  const canGenerate = !isGenerating && Boolean(prompt.trim()) && isValidEventDate(eventDate);
 
   const handleGenerate = async () => {
-    if (!prompt.trim()) return;
+    if (!canGenerate) return;
     setIsGenerating(true);
     setErrorMsg('');
     setResult(null);
 
     try {
-      const data = await generateCarouselWithAi(prompt);
+      const data = await generateCarouselWithAi(prompt, eventDate);
       setResult(data);
     } catch (err: any) {
       setErrorMsg(err.message || "Errore durante la generazione dell'AI.");
@@ -106,14 +109,36 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
         </div>
 
         <p style={{ fontSize: 13, color: '#a0a8d4', margin: 0, lineHeight: 1.4 }}>
-          Descrivi in linguaggio naturale i temi dell'assemblea o della comunicazione. L'AI estrarrà date, orari, punti dell'O.D.G. e regole, inserendoli nei template Figma originali.
+          Scegli la data e descrivi i temi dell'assemblea o della comunicazione. L'AI userà orari, punti dell'O.D.G. e regole per preparare le slide.
         </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label htmlFor="ai-event-date" style={{ fontSize: 14, color: '#ffffff', fontWeight: 600 }}>
+            Data dell’evento <span aria-hidden="true">*</span>
+          </label>
+          <input
+            id="ai-event-date"
+            type="date"
+            required
+            min="0001-01-01"
+            max="9999-12-31"
+            aria-describedby="ai-event-date-help"
+            value={eventDate}
+            disabled={isGenerating}
+            onChange={(e) => { setEventDate(e.target.value); setResult(null); }}
+            style={{ padding: 12, backgroundColor: '#141842', colorScheme: 'dark', color: '#ffffff', border: '1px solid #232a68', borderRadius: 8, fontSize: 14 }}
+          />
+          <p id="ai-event-date-help" style={{ fontSize: 12, color: '#a0a8d4', margin: 0, lineHeight: 1.4 }}>
+            Obbligatoria. La data scelta prevale su quelle indicate nella descrizione.
+          </p>
+        </div>
 
         <textarea
           aria-label="Descrizione per generare il carosello"
           rows={5}
           value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
+          disabled={isGenerating}
+          onChange={(e) => { setPrompt(e.target.value); setResult(null); }}
           placeholder="Inserisci la descrizione dell'assemblea..."
           style={{
             width: '100%',
@@ -130,7 +155,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
         />
 
         {errorMsg && (
-          <div style={{ padding: 12, backgroundColor: 'rgba(255, 70, 70, 0.15)', border: '1px solid #ff4646', borderRadius: 8, color: '#ff8888', fontSize: 13 }}>
+          <div role="alert" style={{ padding: 12, backgroundColor: 'rgba(255, 70, 70, 0.15)', border: '1px solid #ff4646', borderRadius: 8, color: '#ff8888', fontSize: 13 }}>
             {errorMsg}
           </div>
         )}
@@ -177,7 +202,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
           {!result ? (
             <button
               type="button"
-              disabled={isGenerating}
+              disabled={!canGenerate}
               onClick={handleGenerate}
               style={{
                 display: 'flex',
@@ -190,7 +215,8 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                 borderRadius: 8,
                 fontSize: 13,
                 fontWeight: 700,
-                cursor: isGenerating ? 'not-allowed' : 'pointer',
+                cursor: canGenerate ? 'pointer' : 'not-allowed',
+                opacity: canGenerate ? 1 : 0.6,
               }}
             >
               {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}

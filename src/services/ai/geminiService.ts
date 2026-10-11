@@ -1,5 +1,6 @@
-import { AiGeneratedCarouselResponse, AiGeneratedCarouselResponseSchema } from './schemas';
+import { AiGeneratedCarouselResponse, AiGeneratedCarouselResponseSchema, INVALID_CAROUSEL_MESSAGE } from './schemas';
 import { supabase } from '../supabase/supabaseClient';
+import { isValidEventDate } from '../../engine/dateUtils';
 
 export function extractJson(rawText: string): string {
   const trimmed = rawText.trim();
@@ -25,8 +26,11 @@ async function callAi(payload: Record<string, unknown>): Promise<unknown> {
   return result;
 }
 
-export async function generateCarouselWithAi(prompt: string): Promise<AiGeneratedCarouselResponse> {
-  return AiGeneratedCarouselResponseSchema.parse(await callAi({ mode: 'carousel', prompt }));
+export async function generateCarouselWithAi(prompt: string, eventDate: string): Promise<AiGeneratedCarouselResponse> {
+  if (!isValidEventDate(eventDate)) throw new Error('Scegli una data dell’evento valida prima di generare.');
+  const result = AiGeneratedCarouselResponseSchema.safeParse(await callAi({ mode: 'carousel', prompt, eventDate }));
+  if (!result.success) throw new Error(INVALID_CAROUSEL_MESSAGE);
+  return result.data;
 }
 
 export async function generateCaptionWithAi(projectTitle: string, slidesSummary: string): Promise<string> {
