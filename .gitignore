@@ -32,3 +32,4 @@ scripts/figma-nodes.json
 scripts/figma-images-meta.json
 scripts/figma-analysis.txt
 scripts/figma-metrics.json
+.vercel
