@@ -153,11 +153,11 @@ npm run build
 
 ### Progetto collegato
 
-Il progetto cloud `Gentileschi Studio` (`aukspzeknnbhvdhpntiu`) è stato configurato con lo schema di questo repository, bucket privato `gentileschi-media` e accesso condiviso per tutti gli utenti autenticati. I ritorni di autenticazione locali consentiti sono `http://127.0.0.1:5173/` e `http://localhost:5173/`; il Site URL attuale è il primo. Le chiavi esistenti sono salvate nel file `.env` locale, ignorato da Git.
+Il progetto cloud `Gentileschi Studio` (`aukspzeknnbhvdhpntiu`) è stato configurato con lo schema di questo repository, bucket privato `gentileschi-media` e accesso condiviso per tutti gli utenti autenticati. Il sito pubblico è [gentileschi-studio.vercel.app](https://gentileschi-studio.vercel.app/), collegato alla branch `main` della repository GitHub. Il Site URL e il redirect di produzione Supabase sono `https://gentileschi-studio.vercel.app/`; sono consentiti anche i ritorni locali `http://127.0.0.1:5173/` e `http://localhost:5173/`. Le chiavi sono configurate in Vercel per la produzione, con Gemini e `SUPABASE_SERVER_KEY` salvati come variabili Secret, e nel file `.env` locale ignorato da Git.
 
 Verificati sul progetto reale: connessione server, rifiuto delle letture dei progetti e della funzione quota AI da parte del ruolo anonimo, chiamata server della funzione quota, bucket privato con limite di 10 MB e MIME PNG/JPEG/WebP. Il build del browser non contiene le chiavi privilegiate o Gemini.
 
-Prima dell'uso pubblico restano da configurare il servizio SMTP e l'URL del sito pubblicato. I test di accesso con due account e di persistenza delle foto nel cloud richiedono questi passaggi o l'accesso di un membro del team tramite email.
+Prima di aprire l'accesso email a tutti resta da configurare il servizio SMTP. I test di accesso con due account e di persistenza delle foto nel cloud richiedono questo passaggio o l'accesso di un membro del team tramite email. Verificati sul sito pubblicato: schermata di accesso, endpoint AI avviabile e rifiuto delle richieste AI anonime. La generazione AI con una sessione reale e i flussi cloud autenticati restano da verificare dopo l'accesso.
 
 *Nota*: senza Supabase, i progetti restano in `localStorage` e le foto in IndexedDB sul dispositivo. Con Supabase configurato, l'accesso via link email è obbligatorio, i progetti sono condivisi tra tutti gli account registrati e le foto sono scaricate tramite sessione autenticata. La dashboard permette di importare esplicitamente i vecchi progetti locali. Le vecchie immagini salvate solo come URL `blob:` non sono recuperabili dopo la chiusura del browser e vanno ricaricate.
 
