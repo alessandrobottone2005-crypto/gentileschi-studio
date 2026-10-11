@@ -6,12 +6,33 @@ Il tuo compito è analizzare la richiesta dell'utente e generare un carosello In
 REGOLE CRUCIALI:
 1. NON inventare mai informazioni ufficiali non fornite (date, orari precisi, regole). Se mancano, segnalalo nel campo "missingInformation".
 2. Mantieni lo stile di comunicazione fresco, autorevole, rispettoso ma vicino agli studenti del liceo (tono accattivante, energico, in italiano).
-3. I template disponibili sono SOLO 3:
+3. I template disponibili sono SOLO 3, usa ESCLUSIVAMENTE questi valori per templateType:
    - "cover": Titolo (es. "ASSEMBLEA D'ISTITUTO"), giorno (es. "20"), mese (in maiuscolo, es. "NOVEMBRE"), timeSlot (es. "DALLE ORE 10:00\\nALLE ORE 13:00").
-   - "agenda": Titolo (default "O.D.G."), subtitle ("ORDINE DEL GIORNO"), items (array di { id, number: "01", text, isHighlight: boolean }).
+   - "agenda": Titolo (default "O.D.G."), subtitle ("ORDINE DEL GIORNO"), items (array di { id: string, number: "01", text: string, isHighlight?: boolean }).
    - "notice": Slide per comunicazioni importanti o regole. highlightQuantity (es. "2"), highlightLabel (es. "STUDENTI\\nPER CLASSE"), badgeText ("NUOVA REGOLA"), paragraph1, paragraph2, ctaText ("PARTECIPARE FA LA DIFFERENZA").
 4. Genera sempre una caption Instagram completa e coinvolgente con emoji e hashtag pertinenti (#LiceoGentileschi, #StudentiNapoli, #AssembleaDiIstituto).
-5. Rispondi ESCLUSIVAMENTE in formato JSON valido.`;
+5. Rispondi ESCLUSIVAMENTE in formato JSON valido aderente al seguente schema:
+{
+  "projectTitle": "Titolo Carosello",
+  "slides": [
+    { "templateType": "cover", "content": { "title": "...", "day": "...", "month": "...", "timeSlot": "..." } },
+    { "templateType": "agenda", "content": { "title": "O.D.G.", "subtitle": "ORDINE DEL GIORNO", "items": [{ "id": "1", "number": "01", "text": "...", "isHighlight": false }] } },
+    { "templateType": "notice", "content": { "title": "IMPORTANTE!", "highlightQuantity": "2", "highlightLabel": "RAPPRESENTANTI", "badgeText": "NUOVA REGOLA", "paragraph1": "...", "paragraph2": "...", "ctaText": "..." } }
+  ],
+  "missingInformation": [],
+  "caption": "testo caption"
+}`;
+
+function extractJson(rawText: string): string {
+  const trimmed = rawText.trim();
+  const codeBlockMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (codeBlockMatch) {
+    return codeBlockMatch[1].trim();
+  }
+  return trimmed;
+}
+
+const SUPPORTED_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash'];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -30,37 +51,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Prompt mancante o non valido.' });
   }
 
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  const requestBody = {
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: `${SYSTEM_PROMPT}\n\nRichiesta utente:\n${prompt}` }],
+      },
+    ],
+    generationConfig: {
+      responseMimeType: 'application/json',
+      temperature: 0.2,
+    },
+  };
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: `${SYSTEM_PROMPT}\n\nRichiesta utente:\n${prompt}` }],
-          },
-        ],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.2,
-        },
-      }),
-    });
+  let lastError = 'Errore sconosciuto nella generazione';
 
-    if (!response.ok) {
-      const err = await response.text();
-      return res.status(response.status).json({ error: err });
+  for (const model of SUPPORTED_MODELS) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        lastError = `Gemini API [${model}] (${response.status}): ${errText}`;
+        if (response.status === 503 || response.status === 429 || response.status === 404) {
+          continue; // Prova modello alternativo
+        }
+        return res.status(response.status).json({ error: lastError });
+      }
+
+      const data = await response.json();
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawText) {
+        lastError = 'Nessun testo generato dalla risposta AI.';
+        continue;
+      }
+
+      const cleanJson = extractJson(rawText);
+      const parsed = JSON.parse(cleanJson);
+      return res.status(200).json(parsed);
+    } catch (err: any) {
+      lastError = err.message || 'Errore durante la chiamata a Gemini.';
     }
-
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    const json = JSON.parse(text);
-
-    return res.status(200).json(json);
-  } catch (error: any) {
-    return res.status(500).json({ error: error.message || 'Errore interno del server' });
   }
+
+  return res.status(500).json({ error: lastError });
 }

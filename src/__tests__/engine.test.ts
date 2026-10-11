@@ -10,6 +10,7 @@ import { formatProjectSlug } from '../services/export/exportEngine';
 import { TEMPLATE_REGISTRY } from '../templates/registry';
 import { createDefaultSlide, createInitialProject } from '../engine/defaultData';
 import { AiGeneratedCarouselResponseSchema } from '../services/ai/schemas';
+import { extractJson } from '../services/ai/geminiService';
 
 describe('Adaptive Layout Engine', () => {
   it('calcola correttamente la dimensione adattiva del font per testi brevi e lunghi', () => {
@@ -122,6 +123,14 @@ describe('Export Pipeline Naming', () => {
 });
 
 describe('AI Zod Schemas Validation', () => {
+  it('estrae correttamente JSON anche se formattato con blocchi markdown', () => {
+    const rawWithMarkdown = '```json\n{"projectTitle": "Test", "slides": []}\n```';
+    expect(extractJson(rawWithMarkdown)).toBe('{"projectTitle": "Test", "slides": []}');
+
+    const rawPlain = '{"projectTitle": "Test"}';
+    expect(extractJson(rawPlain)).toBe('{"projectTitle": "Test"}');
+  });
+
   it('valida correttamente la risposta strutturata del carosello AI', () => {
     const sampleAiOutput = {
       projectTitle: "Assemblea d'Istituto 20 Novembre",
@@ -155,3 +164,4 @@ describe('AI Zod Schemas Validation', () => {
     expect(parsed.success).toBe(true);
   });
 });
+
