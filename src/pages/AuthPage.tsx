@@ -1,40 +1,45 @@
-import React, { useState } from 'react';
-import { supabase } from '../services/supabase/supabaseClient';
+import React, { useEffect, useState } from 'react';
+import { clearGoogleOAuthReturnError, continueWithGoogle, googleOAuthReturnError } from '../services/supabase/googleAuth';
 
 export const AuthPage: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [error, setError] = useState('');
+  const [opening, setOpening] = useState(false);
+  const [error, setError] = useState(() => typeof window === 'undefined' ? ''
+    : googleOAuthReturnError(window.location.search, window.location.hash));
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!supabase) return;
-    setSending(true);
+  useEffect(() => { clearGoogleOAuthReturnError(); }, []);
+
+  const handleGoogleLogin = async () => {
+    if (opening) return;
+    setOpening(true);
     setError('');
-    const result = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: window.location.origin, shouldCreateUser: true },
-    });
-    setSending(false);
-    if (result.error) setError(result.error.message);
-    else setSent(true);
+    try {
+      await continueWithGoogle();
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'Accesso con Google non riuscito. Riprova.');
+      setOpening(false);
+    }
   };
 
   return (
     <main className="auth-page">
-      <form className="auth-card" onSubmit={handleSubmit}>
+      <section className="auth-card" aria-labelledby="auth-title">
         <span className="auth-eyebrow">LICEO GENTILESCHI</span>
-        <h1>Gentileschi Studio</h1>
-        <p>Accedi con un link inviato alla tua email per creare e modificare i post condivisi.</p>
-        <label htmlFor="auth-email">Indirizzo email</label>
-        <input id="auth-email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="nome@esempio.it" />
+        <h1 id="auth-title">Gentileschi Studio</h1>
+        <p>Crea e modifica post e caroselli Instagram per la rappresentanza studentesca. Accedi con il tuo account Google per iniziare.</p>
         {error && <p role="alert" className="auth-error">{error}</p>}
-        {sent && <p role="status" className="auth-success">Controlla la posta e apri il link di accesso su questo dispositivo.</p>}
-        <button type="submit" disabled={sending}>{sending ? 'Invio in corso...' : 'Invia link di accesso'}</button>
+        <button type="button" className="google-auth-button" onClick={handleGoogleLogin} disabled={opening}>
+          <svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 48 48">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6C44.4 38.04 46.98 31.9 46.98 24.55z" />
+            <path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.19A23.86 23.86 0 0 0 0 24c0 3.87.94 7.53 2.56 10.78l7.97-6.19z" />
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.8l-7.73-6c-2.15 1.45-4.92 2.3-8.18 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+          </svg>
+          {opening ? 'Apertura accesso Google…' : 'Continua con Google'}
+        </button>
+        {opening && <p role="status" className="auth-success">Ti stiamo indirizzando a Google.</p>}
         <small>I progetti e le fotografie sono visibili a tutti gli utenti registrati.</small>
         <a className="auth-privacy-link" href="/privacy">Informativa sulla privacy</a>
-      </form>
+      </section>
     </main>
   );
 };
