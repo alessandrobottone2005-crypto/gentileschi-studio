@@ -9,11 +9,13 @@ export const PrivacyPage: React.FC = () => (
       <section>
         <h2>Accesso e account</h2>
         <p>Per accedere usi il tuo account Google. Google comunica a Supabase l’identificativo dell’account, l’indirizzo email e le informazioni di base del profilo, come nome e immagine. Servono a gestire il tuo account e la sessione di accesso.</p>
+        <p>Il nome visualizzato e la foto del profilo sono visibili agli altri utenti per attribuire progetti e fotografie. Puoi personalizzare il nome nel tool senza modificare il tuo account Google. Soltanto gli amministratori possono vedere l’elenco completo degli indirizzi email e assegnare i ruoli di editor o amministratore.</p>
         <p>La sessione viene conservata nel browser per mantenere l’accesso tra una visita e l’altra. Puoi terminarla con il comando Esci.</p>
       </section>
       <section>
         <h2>Progetti e fotografie condivisi</h2>
-        <p>Testi, caption, fotografie caricate e modifiche dei progetti vengono archiviati in Supabase. Tutti gli utenti registrati possono vedere e modificare i progetti e accedere alle fotografie. L’archivio è protetto dai visitatori senza accesso.</p>
+        <p>Testi, caption, fotografie caricate e modifiche dei progetti vengono archiviati in Supabase. Tutti gli utenti registrati possono vedere, modificare ed eliminare i progetti e accedere alle fotografie. L’archivio è protetto dai visitatori senza accesso.</p>
+        <p>Eliminare un progetto non elimina le fotografie: rimangono nella libreria condivisa e possono essere riutilizzate.</p>
         <p>Carica solo fotografie che sei autorizzato a utilizzare. Per fotografie di studenti minorenni, assicurati di disporre della liberatoria. La rimozione dello sfondo viene elaborata nel browser.</p>
       </section>
       <section>
