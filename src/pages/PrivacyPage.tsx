@@ -28,7 +28,7 @@ export const PrivacyPage: React.FC = () => (
       </section>
       <section>
         <h2>Gestione dei dati e contatto</h2>
-        <p>Puoi modificare ed eliminare i progetti dall’app. Per richieste relative al tuo account o ai dati archiviati, contatta l’amministratore di Gentileschi Studio: <a href="mailto:alessandrobottone2005@gmail.com">alessandrobottone2005@gmail.com</a>.</p>
+        <p>Puoi modificare ed eliminare i progetti dall’app. Per richieste relative al tuo account o ai dati archiviati, contatta l’amministratore di Gentileschi Studio: <a href="mailto:alessandro.bottone.design@gmail.com">alessandro.bottone.design@gmail.com</a>.</p>
       </section>
       <p><small>Aggiornata il 12 ottobre 2026.</small></p>
       <a className="auth-privacy-link" href="/">Torna a Gentileschi Studio</a>
