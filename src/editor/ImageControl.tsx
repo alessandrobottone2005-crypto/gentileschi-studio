@@ -2,6 +2,8 @@ import React, { useRef, useState } from 'react';
 import { SlideImage } from '../types/template';
 import { saveMedia } from '../services/image/mediaStore';
 import { isSupabaseConfigured } from '../services/supabase/supabaseClient';
+import { MediaPicker } from '../studio/MediaLibrary';
+import '../design-system/studio.css';
 import { legacyDefaultImageKey } from '../engine/defaultAssets';
 import { Upload, Scissors, RotateCcw, AlertTriangle, Loader2 } from 'lucide-react';
 
@@ -18,6 +20,7 @@ export const ImageControl: React.FC<ImageControlProps> = ({
   onChange,
   onReset,
 }) => {
+  const [showLibrary, setShowLibrary] = useState(false);
   const [isProcessingBg, setIsProcessingBg] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [progressMsg, setProgressMsg] = useState('');
@@ -154,6 +157,7 @@ export const ImageControl: React.FC<ImageControlProps> = ({
           >
             <Upload size={15} /> {isUploading ? 'Caricamento...' : 'Carica Nuova Foto'}
           </button>
+          <button type="button" className="studio-button" disabled={isUploading || isProcessingBg} onClick={() => setShowLibrary(true)}>Scegli dalla libreria</button>
           <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleFileUpload} disabled={isUploading} hidden aria-label="Seleziona fotografia" />
 
           <button
@@ -262,6 +266,8 @@ export const ImageControl: React.FC<ImageControlProps> = ({
           <RotateCcw size={12} /> Ripristina immagine originale
         </button>
       </div>
+
+      {showLibrary && <MediaPicker onClose={() => setShowLibrary(false)} onSelect={selected => { onChange(selected); setShowLibrary(false); }} />}
 
       {/* Privacy Notice for School Photos */}
       <div style={{ marginTop: 14, padding: 8, backgroundColor: '#0b0e2b', borderRadius: 6, display: 'flex', gap: 8, alignItems: 'flex-start' }}>

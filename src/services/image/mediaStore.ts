@@ -2,6 +2,8 @@ import type { Project, SlideImage, TemplateType } from '../../types/template';
 import { DEFAULT_IMAGES, legacyDefaultImageKey } from '../../engine/defaultAssets';
 import { isSupabaseConfigured, supabase } from '../supabase/supabaseClient';
 
+import type { MediaAsset } from '../../types/studio';
+
 const BUCKET = 'gentileschi-media';
 const LOCAL_DB = 'gentileschi-media-v1';
 const LOCAL_STORE = 'images';
@@ -47,7 +49,7 @@ async function readLocalBlob(key: string): Promise<Blob> {
   }
 }
 
-export async function saveMedia(blob: Blob): Promise<{ storagePath: string; url: string }> {
+export async function saveMedia(blob: Blob, originalName?: string): Promise<{ storagePath: string; url: string }> {
   if (!ACCEPTED_TYPES.has(blob.type)) {
     throw new Error('Carica un file PNG, JPG o WEBP.');
   }
@@ -61,6 +63,7 @@ export async function saveMedia(blob: Blob): Promise<{ storagePath: string; url:
     const { error } = await supabase.storage.from(BUCKET).upload(key, blob, {
       contentType: blob.type,
       upsert: false,
+      metadata: { originalName: originalName || (typeof File !== 'undefined' && blob instanceof File ? blob.name : 'Foto senza sfondo') },
     });
     if (error) throw new Error(`Caricamento non riuscito: ${error.message}`);
     return { storagePath: `cloud:${key}`, url: URL.createObjectURL(blob) };
@@ -70,7 +73,7 @@ export async function saveMedia(blob: Blob): Promise<{ storagePath: string; url:
   return { storagePath: `local:${key}`, url: URL.createObjectURL(blob) };
 }
 
-async function loadMedia(storagePath: string): Promise<string> {
+export async function loadMedia(storagePath: string): Promise<string> {
   const [source, key] = storagePath.split(':', 2);
   if (!key) throw new Error('Percorso immagine non valido.');
   if (source === 'local') return URL.createObjectURL(await readLocalBlob(key));
@@ -162,4 +165,26 @@ export async function moveLocalMediaToCloud(project: Project): Promise<Project> 
     return { ...slide, content } as typeof slide;
   }));
   return { ...migrated, slides };
+}
+
+export async function listLocalMedia(): Promise<MediaAsset[]> {
+  const db = await openLocalDb();
+  try {
+    return await new Promise<MediaAsset[]>((resolve, reject) => {
+      const assets: MediaAsset[] = [];
+      const tx = db.transaction(LOCAL_STORE, 'readonly');
+      const request = tx.objectStore(LOCAL_STORE).openCursor();
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (!cursor) return;
+        const blob = cursor.value as Blob;
+        const name = String(cursor.key);
+        assets.push({ id: name, name, originalName: `Foto ${name.slice(0, 8)}`, ownerId: 'local-device',
+          size: blob.size, mimeType: blob.type, createdAt: null, storagePath: `local:${name}`, previewUrl: URL.createObjectURL(blob) });
+        cursor.continue();
+      };
+      tx.oncomplete = () => resolve(assets);
+      tx.onerror = () => reject(new Error('Impossibile caricare le foto su questo dispositivo.'));
+    });
+  } finally { db.close(); }
 }

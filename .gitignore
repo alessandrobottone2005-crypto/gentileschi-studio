@@ -33,3 +33,7 @@ scripts/figma-images-meta.json
 scripts/figma-analysis.txt
 scripts/figma-metrics.json
 .vercel
+
+# Visual verification captures and transient build measurements
+.impeccable/review/
+.impeccable/build/

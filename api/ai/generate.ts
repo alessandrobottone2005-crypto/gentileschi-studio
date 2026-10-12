@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { aiLimits } from '../../server/aiLimits.js';
 import { generateValidCarousel, InvalidCarouselResponseError } from '../../src/services/ai/carouselResponse.js';
 import { isValidEventDate } from '../../src/engine/dateUtils.js';
 
@@ -18,11 +19,6 @@ const inputSchema = z.discriminatedUnion('mode', [carouselInput, captionInput]);
 const CAROUSEL_PROMPT = `Sei l'assistente dei rappresentanti del Liceo Gentileschi. Crea un carosello Instagram in italiano usando solo i template cover, agenda e notice. Non inventare date, orari o regole: segnala le informazioni mancanti in missingInformation. Rispondi solo con JSON valido nella forma {"projectTitle":"...","slides":[{"templateType":"cover","content":{"title":"...","day":"...","month":"...","timeSlot":"..."}},{"templateType":"agenda","content":{"title":"O.D.G.","subtitle":"ORDINE DEL GIORNO","items":[{"id":"1","number":"01","text":"...","isHighlight":false}]}},{"templateType":"notice","content":{"title":"IMPORTANTE!","highlightQuantity":"2","highlightLabel":"STUDENTI PER CLASSE","badgeText":"NUOVA REGOLA","paragraph1":"...","paragraph2":"...","ctaText":"PARTECIPARE FA LA DIFFERENZA"}}],"missingInformation":[],"caption":"..."}.`;
 const CAPTION_PROMPT = `Scrivi una caption Instagram chiara e coinvolgente in italiano per i rappresentanti del Liceo Gentileschi. Non inventare date, orari o fatti. Restituisci solo il testo della caption.`;
 const MODELS = ['gemini-3.8-flash', 'gemini-3.6-flash'];
-
-function dailyLimit(value: string | undefined, fallback: number): number {
-  const parsed = Number(value);
-  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
-}
 
 class AiProviderError extends Error {}
 
@@ -74,8 +70,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (authError || !user) return res.status(401).json({ error: 'Sessione non valida.' });
 
   const adminClient = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  const userLimit = dailyLimit(process.env.AI_USER_DAILY_LIMIT, 20);
-  const globalLimit = dailyLimit(process.env.AI_GLOBAL_DAILY_LIMIT, 500);
+  const { userLimit, globalLimit } = aiLimits();
   const { data: allowed, error: quotaError } = await adminClient.rpc('consume_ai_quota', {
     p_user_id: user.id,
     p_user_limit: userLimit,

@@ -218,3 +218,19 @@ Il motore è progettato secondo i principi Open/Closed:
 
 Progettato esclusivamente per l'uso istituzionale da parte dei Rappresentanti degli Studenti del Liceo Gentileschi di Napoli.
 Non utilizzare immagini di studenti senza autorizzazione e liberatoria formale.
+
+## Area account e organizzazione dello studio
+
+La navigazione comprende Panoramica (`/`), Progetti (`/projects`), Libreria (`/library`), Account (`/account`) e Utenti (`/users`, solo amministratori). Tutti gli utenti Google registrati entrano come editor: possono creare, modificare, duplicare ed eliminare qualsiasi progetto condiviso. “Creati da me” indica il creatore originale, senza limitare la visibilità. Il nome personalizzato cambia soltanto in Gentileschi Studio; email, foto e nome Google rimangono separati.
+
+Eseguire `supabase/migrations/20261012_studio_accounts.sql` **dopo lo schema iniziale e prima di pubblicare questa interfaccia**. La migrazione sincronizza i profili con Auth, inizializza gli account esistenti, assegna il primo admin all'account Google verificato di Alessandro e protegge i ruoli tramite permessi di colonna, RLS e RPC. Non modifica i ruoli ai successivi accessi Google. Gli editor leggono il proprio profilo e il nome degli autori; soltanto gli admin leggono l'elenco completo delle email. `set_studio_role` serializza le richieste con un advisory lock e impedisce di retrocedere l'ultimo admin. Nessuna funzione di sospensione o cancellazione account è esposta dal tool. I progetti mantengono il controllo delle revisioni e il creatore non può essere modificato dai client.
+
+La libreria legge i file del bucket privato `gentileschi-media`, con caricatore ricavato da `storage.objects.owner_id`, formato, dimensione, data e nome originale per i nuovi caricamenti. Le foto esistenti senza nome leggibile usano “Foto” e un identificativo abbreviato. Si possono caricare e scaricare foto, visualizzarle e scegliere “Scegli dalla libreria” nell'editor per riutilizzarle senza un secondo upload. L'eliminazione di un progetto conserva tutte le foto. Senza Supabase, progetti, nome e immagini restano sul dispositivo e non vengono più creati progetti dimostrativi automaticamente.
+
+`GET /api/account` richiede una sessione valida e restituisce esclusivamente il consumo dell'utente autenticato (`used`, `limit`, `remaining`, `available`, `resetsAt`), con disponibilità limitata anche dalla quota globale. Non consuma quota. Usa gli stessi limiti configurabili di `/api/ai/generate`, azzeramento UTC e risposta `private, no-store`. In Account l'ora di azzeramento è mostrata nel fuso del browser; richieste fallite dopo il consumo rimangono conteggiate. Con il solo server Vite l'endpoint server non è disponibile: il messaggio distingue questa condizione dal consumo zero.
+
+La pulizia autorizzata dei tre progetti di prova usa esclusivamente i loro ID in `scripts/cleanup-test-projects.mjs`, mai una cancellazione generale. Lo script è ripetibile e conserva un backup privato nella cartella ignorata `.vercel/diagnostic`; account, fotografia presente e storico AI vengono conservati. La pulizia non è eseguita all'avvio, nei deploy o nelle migrazioni.
+
+I test dei permessi eseguono la migrazione su PostgreSQL incorporato tramite PGlite. `supabase/tests-studio-permissions.sql` verifica inoltre i ruoli e la libreria sul progetto reale in una transazione con rollback, senza lasciare le modifiche di prova. Eseguire questo script solo su questa installazione: usa gli identificativi dei due account già verificati.
+
+Per verificare il blocco simultaneo dei ruoli, avviare `supabase/tests-studio-concurrency-a.sql` e subito dopo `supabase/tests-studio-concurrency-b.sql` in due schede SQL indipendenti. La seconda richiesta deve attendere il lock della prima e poi rifiutare la retrocessione dell'ultimo admin. Entrambe le transazioni terminano con rollback. Questa prova è stata eseguita con successo sul database reale il 12 ottobre 2026.

@@ -26,7 +26,7 @@ import {
 interface EditorPageProps {
   initialProject: Project;
   onBackToDashboard: () => void;
-  onSignOut?: () => void;
+  onSignOut?: () => Promise<void>;
 }
 
 // Rapporto minimo di scala (evita divisioni per zero / anteprima invisibile)
@@ -102,7 +102,9 @@ export const EditorPage: React.FC<EditorPageProps> = ({
 
   const handleBack = () => leaveEditor(onBackToDashboard);
   const handleSignOut = () => {
-    if (onSignOut) void leaveEditor(onSignOut);
+    if (onSignOut) void leaveEditor(() => {
+      void onSignOut().catch(() => { setSaveError('Uscita non riuscita. Riprova.'); });
+    });
   };
 
   useEffect(() => {

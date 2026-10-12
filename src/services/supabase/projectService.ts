@@ -1,6 +1,5 @@
 import type { Project } from '../../types/template';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
-import { createInitialProject } from '../../engine/defaultData';
 import { hydrateProject, moveLocalMediaToCloud, serializeProject } from '../image/mediaStore';
 
 const LOCAL_STORAGE_KEY = 'gentileschi_studio_projects';
@@ -37,12 +36,10 @@ async function requireUserId(): Promise<string> {
 function readLocalProjects(): Project[] {
   const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
   if (stored) return JSON.parse(stored) as Project[];
-  const initial = [serializeProject(createInitialProject('carousel'))];
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(initial));
-  return initial;
+  return [];
 }
 
-export async function getProjects(): Promise<Project[]> {
+export async function getProjects(options: { hydrate?: boolean } = {}): Promise<Project[]> {
   if (isSupabaseConfigured && supabase) {
     await requireUserId();
     const { data, error } = await supabase
@@ -50,9 +47,11 @@ export async function getProjects(): Promise<Project[]> {
       .select('*')
       .order('updated_at', { ascending: false });
     if (error) throw new Error(`Impossibile caricare i progetti condivisi: ${error.message}`);
-    return Promise.all((data || []).map((row) => hydrateProject(mapRow(row))));
+    const projects = (data || []).map(mapRow);
+    return options.hydrate === false ? projects : Promise.all(projects.map(hydrateProject));
   }
-  return Promise.all(readLocalProjects().map(hydrateProject));
+  const projects = readLocalProjects();
+  return options.hydrate === false ? projects : Promise.all(projects.map(hydrateProject));
 }
 
 export async function saveProject(project: Project): Promise<Project> {

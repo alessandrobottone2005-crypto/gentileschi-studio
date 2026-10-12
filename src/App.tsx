@@ -57,7 +57,8 @@ export const App: React.FC = () => {
   };
 
   const handleSignOut = async () => {
-    await supabase?.auth.signOut();
+    const result = await supabase?.auth.signOut();
+    if (result?.error) throw result.error;
   };
 
   const handleBackToDashboard = () => {
@@ -87,7 +88,7 @@ export const App: React.FC = () => {
     );
   }
 
-  return <DashboardPage onOpenProject={handleOpenProject} onSignOut={isSupabaseConfigured ? handleSignOut : undefined} openError={openError} />;
+  return <DashboardPage key={session?.user.id || 'local'} userId={session?.user.id} onOpenProject={handleOpenProject} onSignOut={isSupabaseConfigured ? handleSignOut : undefined} openError={openError} />;
 };
 
 export default App;

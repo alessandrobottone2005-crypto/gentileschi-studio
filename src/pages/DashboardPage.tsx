@@ -1,398 +1,606 @@
-import React, { useState, useEffect } from 'react';
-import { Project } from '../types/template';
-import { getProjects, saveProject, duplicateProject, deleteProject, countLocalProjectsToImport, importLocalProjects } from '../services/supabase/projectService';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Home,
+  FolderOpen,
+  Image,
+  UserRound,
+  Users,
+  LogOut,
+  Menu,
+  X,
+  Plus,
+  Search,
+  ArrowRight,
+  Cloud,
+  HardDrive,
+} from 'lucide-react';
+import {
+  getProjects,
+  countLocalProjectsToImport,
+  importLocalProjects,
+} from '../services/supabase/projectService';
 import { isSupabaseConfigured } from '../services/supabase/supabaseClient';
-import { createInitialProject, createDefaultSlide } from '../engine/defaultData';
-import { Plus, Copy, Trash2, Edit3, Sparkles, Layers, Image as ImageIcon, Cloud, HardDrive } from 'lucide-react';
-import { useDialogFocus } from '../editor/useDialogFocus';
+import {
+  getProfile,
+  getAuthors,
+  LOCAL_USER_ID,
+} from '../services/supabase/accountService';
+import {
+  getMediaLibrary,
+  releaseLocalPreviews,
+} from '../services/image/libraryService';
+import type { StudioView } from '../types/studio';
+import { useResource } from '../studio/useResource';
+import {
+  Avatar,
+  EmptyProjects,
+  ResourceError,
+  roleLabel,
+} from '../studio/StudioUi';
+import { CreateProjectDialog } from '../studio/CreateProjectDialog';
+import { ProjectList, isOwnProject } from '../studio/ProjectList';
+import { MediaLibrary } from '../studio/MediaLibrary';
+import { AccountPanel } from '../studio/AccountPanel';
+import { UsersPanel } from '../studio/UsersPanel';
+import '../design-system/studio.css';
 
 interface DashboardPageProps {
-  onOpenProject: (projectId: string) => void;
-  onSignOut?: () => void;
+  onOpenProject: (id: string) => void;
+  onSignOut?: () => Promise<void>;
   openError?: string;
+  userId?: string;
+}
+const loadProjects = () => getProjects({ hydrate: false });
+const sections = [
+  {
+    id: 'overview',
+    path: '/',
+    label: 'Panoramica',
+    icon: Home,
+    title: 'Il tuo studio',
+    description:
+      'Uno spazio condiviso per dare forma alle prossime comunicazioni.',
+  },
+  {
+    id: 'projects',
+    path: '/projects',
+    label: 'Progetti',
+    icon: FolderOpen,
+    title: 'Progetti dello studio',
+    description: 'Tutti i lavori, condivisi con chi fa parte dello studio.',
+  },
+  {
+    id: 'library',
+    path: '/library',
+    label: 'Libreria',
+    icon: Image,
+    title: 'Libreria fotografica',
+    description:
+      'Le foto dello studio, pronte da riutilizzare nei tuoi progetti.',
+  },
+  {
+    id: 'account',
+    path: '/account',
+    label: 'Account',
+    icon: UserRound,
+    title: 'Il tuo account',
+    description: 'Il tuo profilo e i tuoi contributi allo studio condiviso.',
+  },
+  {
+    id: 'users',
+    path: '/users',
+    label: 'Utenti',
+    icon: Users,
+    title: 'Utenti dello studio',
+    description: 'Le persone che lavorano qui e il ruolo di ciascuna.',
+  },
+] as const;
+function currentView(): StudioView {
+  return (
+    sections.find(
+      (section) =>
+        section.path === window.location.pathname.replace(/\/$/, '') ||
+        (section.path === '/' && window.location.pathname === '/'),
+    )?.id || 'overview'
+  );
 }
 
-export const DashboardPage: React.FC<DashboardPageProps> = ({ onOpenProject, onSignOut, openError }) => {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
-  const [newType, setNewType] = useState<'single' | 'carousel'>('carousel');
-  const [newMode, setNewMode] = useState<'manual' | 'ai'>('manual');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editTitleText, setEditTitleText] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [localImportCount, setLocalImportCount] = useState(() => {
-    try { return countLocalProjectsToImport(); } catch { return 0; }
-  });
+export const DashboardPage: React.FC<DashboardPageProps> = ({
+  onOpenProject,
+  onSignOut,
+  openError,
+  userId = LOCAL_USER_ID,
+}) => {
+  const mainRef = useRef<HTMLElement>(null);
+  const [view, setView] = useState<StudioView>(currentView);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [search, setSearch] = useState('');
+  const [scope, setScope] = useState<'all' | 'mine'>('all');
+  const [operationError, setOperationError] = useState('');
+  const [signingOut, setSigningOut] = useState(false);
   const [importing, setImporting] = useState(false);
-  const createDialogRef = useDialogFocus(() => setShowCreateModal(false), showCreateModal);
-
-  const loadAll = async () => {
-    setLoading(true);
-    setErrorMessage('');
+  const [localCount, setLocalCount] = useState(() => {
     try {
-      setProjects(await getProjects());
-      setLocalImportCount(countLocalProjectsToImport());
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Impossibile caricare i progetti.');
-    } finally {
-      setLoading(false);
+      return countLocalProjectsToImport();
+    } catch {
+      return 0;
     }
+  });
+  const profileLoader = useCallback(() => getProfile(userId), [userId]);
+  const profile = useResource(profileLoader);
+  const authors = useResource(getAuthors);
+  const projects = useResource(loadProjects);
+  const media = useResource(getMediaLibrary, releaseLocalPreviews);
+  const local = !isSupabaseConfigured;
+  const personal = (projects.data || []).filter((project) =>
+    isOwnProject(project, userId, local),
+  );
+  const navigate = (next: StudioView) => {
+    const path = sections.find((section) => section.id === next)!.path;
+    if (window.location.pathname !== path)
+      window.history.pushState(null, '', path);
+    setView(next);
+    setMenuOpen(false);
+    window.scrollTo(0, 0);
+    mainRef.current?.focus();
   };
-
-  const handleImportLocal = async () => {
-    setImporting(true);
-    setErrorMessage('');
-    try { await importLocalProjects(); await loadAll(); }
-    catch (error) { setErrorMessage(error instanceof Error ? error.message : 'Importazione non riuscita.'); }
-    finally { setImporting(false); }
-  };
-
   useEffect(() => {
-    loadAll();
-  }, []);
-
-  const handleCreate = async () => {
-    const proj = createInitialProject(newType);
-    if (newTitle.trim()) {
-      proj.title = newTitle.trim();
-    }
-    if (newType === 'single') {
-      proj.slides = [createDefaultSlide('cover')];
-    }
-    try {
-      await saveProject(proj);
-      setShowCreateModal(false);
-      setNewTitle('');
-      onOpenProject(proj.id);
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Creazione non riuscita.');
-    }
-  };
-
-  const handleDuplicate = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    try { await duplicateProject(id); await loadAll(); }
-    catch (error) { setErrorMessage(error instanceof Error ? error.message : 'Duplicazione non riuscita.'); }
-  };
-
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm('Sei sicuro di voler eliminare questo progetto?')) {
-      try { await deleteProject(id); await loadAll(); }
-      catch (error) { setErrorMessage(error instanceof Error ? error.message : 'Eliminazione non riuscita.'); }
-    }
-  };
-
-  const handleStartRename = (proj: Project, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditingId(proj.id);
-    setEditTitleText(proj.title);
-  };
-
-  const handleSaveRename = async (proj: Project, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (editTitleText.trim()) {
-      try {
-        await saveProject({ ...proj, title: editTitleText.trim() });
-        setEditingId(null);
-        await loadAll();
-      } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : 'Rinomina non riuscita.');
+    if (!menuOpen) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+        document.getElementById('studio-menu-toggle')?.focus();
       }
+    };
+    document.addEventListener('keydown', close);
+    return () => document.removeEventListener('keydown', close);
+  }, [menuOpen]);
+  useEffect(() => {
+    const pop = () => {
+      setView(currentView());
+      setMenuOpen(false);
+    };
+    window.addEventListener('popstate', pop);
+    return () => window.removeEventListener('popstate', pop);
+  }, []);
+  useEffect(() => {
+    const refresh = () => {
+      void profile.reload();
+      void authors.reload();
+      void projects.reload();
+      void media.reload();
+    };
+    window.addEventListener('focus', refresh);
+    const timer = setInterval(
+      () => {
+        void media.reload();
+      },
+      50 * 60 * 1000,
+    );
+    return () => {
+      window.removeEventListener('focus', refresh);
+      clearInterval(timer);
+    };
+  }, [profile.reload, authors.reload, projects.reload, media.reload]);
+  const refreshProfile = () => {
+    void profile.reload();
+    void authors.reload();
+  };
+  const section = sections.find((section) => section.id === view)!;
+  const shownProjects = (
+    scope === 'mine' ? personal : projects.data || []
+  ).filter((project) =>
+    `${project.title} ${authors.data?.find((author) => author.id === project.userId)?.displayName || ''}`
+      .toLocaleLowerCase('it')
+      .includes(search.toLocaleLowerCase('it')),
+  );
+  const projectList = (list = projects.data || [], mine = false) =>
+    projects.loading ? (
+      <p role="status" className="studio-loading">
+        Caricamento progetti…
+      </p>
+    ) : projects.error ? (
+      <ResourceError message={projects.error} retry={projects.reload} />
+    ) : list.length ? (
+      <ProjectList
+        projects={list}
+        authors={authors.data || []}
+        onOpen={onOpenProject}
+        onChanged={projects.reload}
+      />
+    ) : (
+      <EmptyProjects personal={mine} onCreate={() => setCreating(true)} />
+    );
+  const importLocal = async () => {
+    setImporting(true);
+    setOperationError('');
+    try {
+      await importLocalProjects();
+      setLocalCount(countLocalProjectsToImport());
+      await projects.reload();
+      await media.reload();
+    } catch (cause) {
+      setOperationError(
+        cause instanceof Error ? cause.message : 'Importazione non riuscita.',
+      );
+    } finally {
+      setImporting(false);
     }
   };
-
+  const signOut = async () => {
+    if (!onSignOut || signingOut) return;
+    setSigningOut(true);
+    setOperationError('');
+    try {
+      await onSignOut();
+    } catch {
+      setOperationError('Uscita non riuscita. Riprova.');
+      setSigningOut(false);
+    }
+  };
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0b0e2b', padding: '32px 24px', maxWidth: 1200, margin: '0 auto' }}>
-      {/* Top Banner & Header */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 32 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ backgroundColor: '#dfff2f', color: '#10143d', fontFamily: "'Archivo Black', sans-serif", fontSize: 13, padding: '3px 8px', borderRadius: 4, textTransform: 'uppercase' }}>
-                Liceo Gentileschi
-              </span>
-              <span style={{ color: '#8c95c8', fontSize: 13, display: 'flex', alignItems: 'center', gap: 5 }}>
-                {isSupabaseConfigured ? (
-                  <span style={{ color: '#20bf6b', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Cloud size={14} /> Cloud Sincronizzato
-                  </span>
-                ) : (
-                  <span style={{ color: '#f5cd79', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <HardDrive size={14} /> Storage Locale
-                  </span>
-                )}
-              </span>
-            </div>
-            <h1 style={{ fontFamily: "'Archivo Black', sans-serif", fontSize: 32, color: '#ffffff', marginTop: 8, letterSpacing: '-0.02em' }}>
-              Gentileschi Studio
-            </h1>
-            <p style={{ color: '#a0a8d4', fontSize: 14, marginTop: 4 }}>
-              Generatore professionale di post singoli e caroselli Instagram per la rappresentanza studentesca.
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          {onSignOut && <button type="button" onClick={onSignOut} className="secondary-action">Esci</button>}
-          <button
-            type="button"
-            onClick={() => setShowCreateModal(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '12px 20px',
-              backgroundColor: '#1728e8',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: 8,
-              fontFamily: "'Inter', sans-serif",
-              fontSize: 14,
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(23, 40, 232, 0.4)',
-            }}
-          >
-            <Plus size={18} /> Nuovo Progetto
-          </button>
-          </div>
-        </div>
-      </div>
-
-      {localImportCount > 0 && (
-        <div className="local-import-notice">
-          <span>Ci sono {localImportCount} progetti salvati su questo dispositivo. Importandoli, progetti e foto saranno visibili a tutti gli utenti registrati.</span>
-          <button type="button" disabled={importing} onClick={handleImportLocal}>{importing ? 'Importazione...' : 'Importa progetti locali'}</button>
-        </div>
-      )}
-
-      {(errorMessage || openError) && <div role="alert" className="app-error">{errorMessage || openError} <button type="button" onClick={loadAll}>Riprova</button></div>}
-
-      {/* Projects Grid */}
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: 60, color: '#8c95c8' }}>
-          Caricamento progetti in corso...
-        </div>
-      ) : projects.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 60, backgroundColor: '#10143d', borderRadius: 12, border: '2px dashed #232a68' }}>
-          <Layers size={40} color="#8c95c8" style={{ marginBottom: 16 }} />
-          <h3 style={{ color: '#ffffff', fontSize: 18, marginBottom: 8 }}>Nessun progetto creato</h3>
-          <p style={{ color: '#8c95c8', fontSize: 14, marginBottom: 20 }}>
-            Inizia subito creando un post singolo o un carosello Instagram.
-          </p>
-          <button
-            type="button"
-            onClick={() => setShowCreateModal(true)}
-            style={{ padding: '10px 18px', backgroundColor: '#dfff2f', color: '#10143d', border: 'none', borderRadius: 6, fontWeight: 700, cursor: 'pointer' }}
-          >
-            Crea il tuo primo post
-          </button>
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 24 }}>
-          {projects.map((proj) => (
-            <div
-              key={proj.id}
-              onClick={() => onOpenProject(proj.id)}
-              style={{
-                backgroundColor: '#10143d',
-                border: '1px solid #232a68',
-                borderRadius: 12,
-                overflow: 'hidden',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                transition: 'transform 0.15s ease, border-color 0.15s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.borderColor = '#304bff';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = '#232a68';
-              }}
-            >
-              {/* Preview card visual */}
-              <div
-                style={{
-                  height: 180,
-                  backgroundColor: '#1728e8',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+    <div className="studio-shell">
+      <a href="#studio-main" className="studio-skip-link">
+        Vai al contenuto
+      </a>
+      <header className="studio-mobile-header">
+        <button
+          type="button"
+          id="studio-menu-toggle"
+          className="studio-icon-button"
+          aria-label={menuOpen ? 'Chiudi navigazione' : 'Apri navigazione'}
+          aria-expanded={menuOpen}
+          aria-controls="studio-navigation"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          {menuOpen ? <X size={23} /> : <Menu size={23} />}
+        </button>
+        <span>
+          GENTILESCHI <small>STUDIO</small>
+        </span>
+        <button
+          type="button"
+          className="studio-icon-button"
+          aria-label="Vai al tuo account"
+          onClick={() => navigate('account')}
+        >
+          <Avatar person={profile.data} size="small" />
+        </button>
+      </header>
+      <aside
+        className={`studio-sidebar ${menuOpen ? 'studio-sidebar-open' : ''}`}
+      >
+        <a
+          href="/"
+          className="studio-brand"
+          onClick={(event) => {
+            event.preventDefault();
+            navigate('overview');
+          }}
+        >
+          GENTILESCHI<span>STUDIO</span>
+        </a>
+        <nav id="studio-navigation" aria-label="Navigazione dello studio">
+          {sections
+            .filter(
+              (item) => item.id !== 'users' || profile.data?.role === 'admin',
+            )
+            .map((item) => (
+              <a
+                key={item.id}
+                href={item.path}
+                aria-current={view === item.id ? 'page' : undefined}
+                onClick={(event) => {
+                  event.preventDefault();
+                  navigate(item.id);
                 }}
               >
-                <div style={{ position: 'absolute', inset: 0, opacity: 0.15, backgroundImage: `radial-gradient(circle at 50% 50%, #ffffff 1px, transparent 1px)`, backgroundSize: '12px 12px' }} />
-                <div style={{ textAlign: 'center', padding: 20, zIndex: 2 }}>
-                  <span style={{ fontFamily: "'Archivo Black', sans-serif", fontSize: 24, color: '#f4f0e6', textTransform: 'uppercase', display: 'block' }}>
-                    {proj.slides[0]?.content && 'title' in proj.slides[0].content ? (proj.slides[0].content as any).title : proj.title}
-                  </span>
-                  <span style={{ fontFamily: "'Roboto Mono', monospace", fontSize: 13, color: '#dfff2f', marginTop: 6, display: 'inline-block' }}>
-                    {proj.type === 'carousel' ? `Carosello (${proj.slides.length} Slide)` : 'Post Singolo'}
-                  </span>
-                </div>
+                <item.icon size={21} aria-hidden="true" />
+                {item.label}
+              </a>
+            ))}
+        </nav>
+        <div className="studio-sidebar-bottom">
+          <span className="studio-storage-label">
+            {local ? <HardDrive size={14} /> : <Cloud size={14} />}
+            {local ? 'Su questo dispositivo' : 'Studio condiviso'}
+          </span>
+          <button
+            type="button"
+            className="studio-sidebar-account"
+            onClick={() => navigate('account')}
+          >
+            <Avatar person={profile.data} size="small" />
+            <span>
+              <strong>{profile.data?.displayName || 'Il tuo account'}</strong>
+              <small>
+                {profile.data
+                  ? roleLabel(profile.data.role)
+                  : 'Caricamento profilo…'}
+              </small>
+            </span>
+          </button>
+          {onSignOut && (
+            <button
+              type="button"
+              className="studio-signout"
+              disabled={signingOut}
+              onClick={signOut}
+            >
+              <LogOut size={16} />
+              {signingOut ? 'Uscita…' : 'Esci dallo studio'}
+            </button>
+          )}
+          <a href="/privacy" className="studio-privacy">
+            Privacy
+          </a>
+        </div>
+      </aside>
+      <main
+        ref={mainRef}
+        id="studio-main"
+        tabIndex={-1}
+        className="studio-main"
+      >
+        <header className="studio-page-heading">
+          <div>
+            <h1>{section.title}</h1>
+            <p>{section.description}</p>
+          </div>
+          {(view === 'overview' || view === 'projects') && (
+            <button
+              type="button"
+              className="studio-button studio-button-lime"
+              onClick={() => setCreating(true)}
+            >
+              <Plus size={18} />
+              Nuovo progetto
+            </button>
+          )}
+        </header>
+        {(operationError || openError) && (
+          <div role="alert" className="app-error">
+            {operationError || openError}
+          </div>
+        )}
+        {profile.error && (
+          <ResourceError message={profile.error} retry={profile.reload} />
+        )}
+        {authors.error && (
+          <ResourceError message={authors.error} retry={authors.reload} />
+        )}
+        {localCount > 0 && (view === 'projects' || view === 'overview') && (
+          <div className="local-import-notice">
+            <span>
+              {localCount} progetti sono ancora su questo dispositivo. Puoi
+              importarli nello studio condiviso.
+            </span>
+            <button type="button" disabled={importing} onClick={importLocal}>
+              {importing ? 'Importazione…' : 'Importa progetti locali'}
+            </button>
+          </div>
+        )}
+        {view === 'overview' && (
+          <>
+            <section className="studio-overview-intro">
+              <div>
+                <h2>
+                  {profile.data
+                    ? `Ciao, ${profile.data.displayName.split(' ')[0]}.`
+                    : 'Benvenuto nello studio.'}
+                </h2>
+                <p>
+                  Dal primo testo al post pronto da pubblicare.
+                  <br />
+                  Crea un progetto o riprendi un lavoro dello studio.
+                </p>
               </div>
-
-              {/* Info & Actions */}
-              <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  {editingId === proj.id ? (
-                    <div style={{ display: 'flex', gap: 6, flex: 1 }} onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="text"
-                        value={editTitleText}
-                        onChange={(e) => setEditTitleText(e.target.value)}
-                        style={{ flex: 1, padding: '4px 8px', backgroundColor: '#141842', border: '1px solid #304bff', borderRadius: 4, color: '#ffffff', fontSize: 13 }}
-                      />
-                      <button
-                        type="button"
-                        onClick={(e) => handleSaveRename(proj, e)}
-                        style={{ padding: '4px 10px', backgroundColor: '#dfff2f', color: '#10143d', border: 'none', borderRadius: 4, fontSize: 12, fontWeight: 700 }}
-                      >
-                        Salva
-                      </button>
-                    </div>
-                  ) : (
-                    <div>
-                      <h3 style={{ fontSize: 16, fontWeight: 700, color: '#ffffff', margin: 0 }}>
-                        {proj.title}
-                      </h3>
-                      <span style={{ fontSize: 12, color: '#8c95c8', marginTop: 4, display: 'block' }}>
-                        Modificato: {new Date(proj.updatedAt).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 'auto', paddingTop: 8, borderTop: '1px solid #192055' }}>
-                  <button
-                    type="button"
-                    title="Rinomina"
-                    onClick={(e) => handleStartRename(proj, e)}
-                    style={{ background: 'none', border: 'none', color: '#8c95c8', cursor: 'pointer', padding: 4 }}
-                  >
-                    <Edit3 size={15} />
-                  </button>
-
-                  <button
-                    type="button"
-                    title="Duplica"
-                    onClick={(e) => handleDuplicate(proj.id, e)}
-                    style={{ background: 'none', border: 'none', color: '#8c95c8', cursor: 'pointer', padding: 4 }}
-                  >
-                    <Copy size={15} />
-                  </button>
-
-                  <button
-                    type="button"
-                    title="Elimina"
-                    onClick={(e) => handleDelete(proj.id, e)}
-                    style={{ background: 'none', border: 'none', color: '#ff6b6b', cursor: 'pointer', padding: 4 }}
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
+              <button
+                type="button"
+                className="studio-text-button"
+                onClick={() => navigate('account')}
+              >
+                Il tuo account
+                <ArrowRight size={17} />
+              </button>
+            </section>
+            <dl className="studio-stat-strip">
+              <div>
+                <dt>Progetti nello studio</dt>
+                <dd>
+                  {projects.loading || projects.error
+                    ? '—'
+                    : (projects.data?.length ?? '—')}
+                </dd>
               </div>
+              <div>
+                <dt>Foto in libreria</dt>
+                <dd>
+                  {media.loading || media.error
+                    ? '—'
+                    : (media.data?.length ?? '—')}
+                </dd>
+              </div>
+              <div>
+                <dt>Il tuo ruolo</dt>
+                <dd className="studio-stat-text">
+                  {profile.data ? roleLabel(profile.data.role) : '—'}
+                </dd>
+              </div>
+            </dl>
+            {media.error && (
+              <ResourceError message={media.error} retry={media.reload} />
+            )}
+            <section className="studio-section">
+              <div className="studio-section-heading">
+                <h2>Progetti recenti</h2>
+                <button
+                  type="button"
+                  className="studio-text-button"
+                  onClick={() => navigate('projects')}
+                >
+                  Vedi tutti
+                  <ArrowRight size={17} />
+                </button>
+              </div>
+              {projectList((projects.data || []).slice(0, 5))}
+            </section>
+            <div className="studio-overview-footer">
+              <p>
+                Le fotografie caricate restano disponibili anche quando elimini
+                un progetto.
+              </p>
+              <button
+                type="button"
+                className="studio-text-button"
+                onClick={() => navigate('library')}
+              >
+                Apri la libreria
+                <ArrowRight size={17} />
+              </button>
+            </div>
+          </>
+        )}
+        {view === 'projects' && (
+          <>
+            <div className="studio-toolbar">
+              <label className="studio-search">
+                <Search size={18} aria-hidden="true" />
+                <input
+                  type="search"
+                  aria-label="Cerca progetti"
+                  placeholder="Cerca un progetto o un autore"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                />
+              </label>
+              <div className="studio-filters" aria-label="Filtra progetti">
+                <button
+                  type="button"
+                  aria-pressed={scope === 'all'}
+                  onClick={() => setScope('all')}
+                >
+                  Tutti
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={scope === 'mine'}
+                  onClick={() => setScope('mine')}
+                >
+                  Creati da me
+                </button>
+              </div>
+              <button
+                type="button"
+                className="studio-text-button"
+                onClick={projects.reload}
+                disabled={projects.loading}
+              >
+                Aggiorna
+              </button>
+            </div>
+            {!projects.loading &&
+            !projects.error &&
+            shownProjects.length === 0 &&
+            search ? (
+              <div className="studio-empty">
+                <h2>Nessun progetto trovato</h2>
+                <p>Prova un altro titolo o cambia il filtro.</p>
+              </div>
+            ) : (
+              projectList(shownProjects, scope === 'mine')
+            )}
+          </>
+        )}
+        {view === 'library' && (
+          <MediaLibrary
+            assets={media.data}
+            authors={authors.data || []}
+            loading={media.loading}
+            error={media.error}
+            onReload={media.reload}
+          />
+        )}
+        {view === 'account' && (
+          <>
+            {profile.loading && !profile.data ? (
+              <p role="status" className="studio-loading">
+                Caricamento profilo…
+              </p>
+            ) : (
+              profile.data && (
+                <AccountPanel
+                  profile={profile.data}
+                  projectsCount={
+                    projects.loading || projects.error ? null : personal.length
+                  }
+                  photosCount={
+                    media.loading || media.error
+                      ? null
+                      : (media.data || []).filter(
+                          (asset) => asset.ownerId === userId,
+                        ).length
+                  }
+                  onSaved={refreshProfile}
+                />
+              )
+            )}
+            {media.error && (
+              <ResourceError message={media.error} retry={media.reload} />
+            )}
+            <section className="studio-section">
+              <div className="studio-section-heading">
+                <h2>I tuoi progetti</h2>
+                <button
+                  type="button"
+                  className="studio-text-button"
+                  onClick={() => {
+                    setScope('mine');
+                    setSearch('');
+                    navigate('projects');
+                  }}
+                >
+                  Vedi tutti
+                  <ArrowRight size={17} />
+                </button>
+              </div>
+              {projectList(personal.slice(0, 5), true)}
+            </section>
+          </>
+        )}
+        {view === 'users' &&
+          (profile.loading ? (
+            <p role="status" className="studio-loading">
+              Verifica del ruolo…
+            </p>
+          ) : profile.data?.role === 'admin' ? (
+            <UsersPanel currentId={userId} onRolesChanged={refreshProfile} />
+          ) : (
+            <div className="studio-empty">
+              <h2>Gestione riservata agli amministratori</h2>
+              <p>
+                Il tuo account può lavorare su tutti i progetti dello studio.
+              </p>
+              <button
+                type="button"
+                className="studio-button"
+                onClick={() => navigate('overview')}
+              >
+                Torna alla panoramica
+              </button>
             </div>
           ))}
-        </div>
-      )}
-
-      {/* Create Project Modal */}
-      {showCreateModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(5, 7, 24, 0.85)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div ref={createDialogRef} role="dialog" aria-modal="true" aria-labelledby="create-project-title" tabIndex={-1} style={{ width: '100%', maxWidth: 480, backgroundColor: '#10143d', border: '1px solid #304bff', borderRadius: 12, padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <h2 id="create-project-title" style={{ fontFamily: "'Archivo Black', sans-serif", fontSize: 20, color: '#ffffff', margin: 0 }}>
-              Crea Nuovo Progetto
-            </h2>
-
-            <div>
-              <label htmlFor="new-project-title" style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#f4f0e6', marginBottom: 6 }}>
-                Titolo Progetto
-              </label>
-              <input
-                id="new-project-title"
-                type="text"
-                placeholder="es. Assemblea Novembre 2026"
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                style={{ width: '100%', padding: '10px 12px', backgroundColor: '#141842', border: '1px solid #232a68', borderRadius: 6, color: '#ffffff', fontSize: 14 }}
-              />
-            </div>
-
-            {errorMessage && <div role="alert" className="app-error">{errorMessage}</div>}
-
-            {/* Type selector: Single vs Carousel */}
-            <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#f4f0e6', marginBottom: 6 }}>
-                Tipologia di Post
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <button
-                  type="button"
-                  onClick={() => setNewType('single')}
-                  style={{
-                    padding: 12,
-                    backgroundColor: newType === 'single' ? '#1728e8' : '#141842',
-                    border: newType === 'single' ? '2px solid #dfff2f' : '1px solid #232a68',
-                    borderRadius: 8,
-                    color: '#ffffff',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <ImageIcon size={20} color={newType === 'single' ? '#dfff2f' : '#8c95c8'} />
-                  <span style={{ fontWeight: 700, fontSize: 13 }}>Post Singolo</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setNewType('carousel')}
-                  style={{
-                    padding: 12,
-                    backgroundColor: newType === 'carousel' ? '#1728e8' : '#141842',
-                    border: newType === 'carousel' ? '2px solid #dfff2f' : '1px solid #232a68',
-                    borderRadius: 8,
-                    color: '#ffffff',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <Layers size={20} color={newType === 'carousel' ? '#dfff2f' : '#8c95c8'} />
-                  <span style={{ fontWeight: 700, fontSize: 13 }}>Carosello (Multi-slide)</span>
-                </button>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 10 }}>
-              <button
-                type="button"
-                onClick={() => setShowCreateModal(false)}
-                style={{ padding: '10px 16px', background: 'none', border: '1px solid #232a68', color: '#8c95c8', borderRadius: 6, cursor: 'pointer' }}
-              >
-                Annulla
-              </button>
-              <button
-                type="button"
-                onClick={handleCreate}
-                style={{ padding: '10px 20px', backgroundColor: '#dfff2f', color: '#10143d', border: 'none', borderRadius: 6, fontWeight: 700, cursor: 'pointer' }}
-              >
-                Crea Progetto
-              </button>
-            </div>
-          </div>
-        </div>
+      </main>
+      {creating && (
+        <CreateProjectDialog
+          onClose={() => setCreating(false)}
+          onCreated={(id) => {
+            setCreating(false);
+            void projects.reload();
+            onOpenProject(id);
+          }}
+        />
       )}
     </div>
   );

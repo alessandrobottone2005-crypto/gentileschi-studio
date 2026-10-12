@@ -12,6 +12,8 @@ export function useDialogFocus(onClose: () => void, active = true) {
     dialog?.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      const dialogs = document.querySelectorAll('[aria-modal="true"]');
+      if (dialogs.length && dialogs[dialogs.length - 1] !== dialog) return;
       if (event.key === 'Escape') {
         event.preventDefault();
         onCloseRef.current();
