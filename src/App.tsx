@@ -5,10 +5,12 @@ import { Project } from './types/template';
 import { getProjects } from './services/supabase/projectService';
 import { isSupabaseConfigured, supabase } from './services/supabase/supabaseClient';
 import { AuthPage } from './pages/AuthPage';
+import { PrivacyPage } from './pages/PrivacyPage';
 import type { Session } from '@supabase/supabase-js';
 import './design-system/tokens.css';
 
 export const App: React.FC = () => {
+  const isPrivacyPage = window.location.pathname.replace(/\/$/, '') === '/privacy';
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(false);
@@ -17,14 +19,14 @@ export const App: React.FC = () => {
   const [openError, setOpenError] = useState('');
 
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase || isPrivacyPage) return;
     let active = true;
     supabase.auth.getSession().then(({ data }) => {
       if (active) {
         setSession(data.session);
         setAuthLoading(false);
       }
-    });
+    }).catch(() => { if (active) setAuthLoading(false); });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
       setAuthLoading(false);
@@ -34,7 +36,7 @@ export const App: React.FC = () => {
       }
     });
     return () => { active = false; subscription.unsubscribe(); };
-  }, []);
+  }, [isPrivacyPage]);
 
   const handleOpenProject = async (projectId: string) => {
     setLoading(true);
@@ -62,6 +64,8 @@ export const App: React.FC = () => {
     setCurrentProjectId(null);
     setCurrentProject(null);
   };
+
+  if (isPrivacyPage) return <PrivacyPage />;
 
   if (authLoading || loading) {
     return (
