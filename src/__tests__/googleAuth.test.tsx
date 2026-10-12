@@ -30,7 +30,7 @@ describe('Google sign in', () => {
   it('starts Google OAuth and returns to the current app origin', async () => {
     signInWithOAuth.mockResolvedValueOnce({ data: { url: 'https://accounts.google.com/' }, error: null });
     await continueWithGoogle();
-    expect(signInWithOAuth).toHaveBeenCalledWith({ provider: 'google', options: { redirectTo: 'https://gentileschi-studio.vercel.app' } });
+    expect(signInWithOAuth).toHaveBeenCalledWith({ provider: 'google', options: { redirectTo: 'https://gentileschi-studio.vercel.app', queryParams: { prompt: 'select_account' } } });
   });
   it.each(['provider', 'network', 'missing-url'])('returns a retryable error without provider details (%s)', async (failure) => {
     if (failure === 'network') signInWithOAuth.mockRejectedValueOnce(new Error('Private details'));

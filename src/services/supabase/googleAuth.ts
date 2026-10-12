@@ -34,7 +34,7 @@ export async function continueWithGoogle(): Promise<void> {
   try {
     const result = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: window.location.origin, queryParams: { prompt: 'select_account' } },
     });
     if (result.error || !result.data.url) throw new Error(GOOGLE_AUTH_ERROR);
   } catch {
