@@ -33,6 +33,7 @@ export const AuthPage: React.FC = () => {
         {sent && <p role="status" className="auth-success">Controlla la posta e apri il link di accesso su questo dispositivo.</p>}
         <button type="submit" disabled={sending}>{sending ? 'Invio in corso...' : 'Invia link di accesso'}</button>
         <small>I progetti e le fotografie sono visibili a tutti gli utenti registrati.</small>
+        <a className="auth-privacy-link" href="/privacy">Informativa sulla privacy</a>
       </form>
     </main>
   );
