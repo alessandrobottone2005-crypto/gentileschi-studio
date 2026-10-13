@@ -12,6 +12,9 @@ test("photo outline does not amplify faint background-removal residue", async ({
     context.fillRect(40, 40, 28, 28);
     context.fillStyle = "rgba(0,0,0,0.02)";
     context.fillRect(10, 10, 1, 1);
+    context.fillStyle = "#333333";
+    context.fillRect(20, 20, 3, 3);
+    context.fillRect(80, 80, 12, 12);
     const rendered = await styledPhoto(source.toDataURL(), {
       ...GENTILESCHI_EFFECT, outline: 30, shadow: 0,
     });
@@ -29,10 +32,16 @@ test("photo outline does not amplify faint background-removal residue", async ({
       softResidue: alpha(10, 10),
       subject: alpha(50, 50),
       subjectOutline: alpha(38, 50),
+      detachedFragmentRing: alpha(25, 21),
+      originalFragment: alpha(21, 21),
+      secondSubjectOutline: alpha(78, 85),
     };
   });
   expect(result.residueRing).toBe(0);
   expect(result.softResidue).toBeLessThan(10);
   expect(result.subject).toBe(255);
   expect(result.subjectOutline).toBe(255);
+  expect(result.detachedFragmentRing).toBe(0);
+  expect(result.originalFragment).toBe(255);
+  expect(result.secondSubjectOutline).toBe(255);
 });

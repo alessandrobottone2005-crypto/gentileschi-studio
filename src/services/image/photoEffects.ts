@@ -38,6 +38,43 @@ export interface RenderedPhoto {
   padding: number;
 }
 const cache = new Map<string, Promise<RenderedPhoto>>();
+
+function cleanOutlineMask(pixels: Uint8ClampedArray, width: number, height: number) {
+  const count = width * height;
+  const labels = new Int32Array(count);
+  const queue = new Int32Array(count);
+  const sizes = [0];
+  let largest = 0;
+  for (let start = 0; start < count; start++) {
+    if (labels[start] || pixels[start * 4 + 3] < 128) continue;
+    const label = sizes.length;
+    let head = 0, tail = 1;
+    queue[0] = start;
+    labels[start] = label;
+    while (head < tail) {
+      const point = queue[head++];
+      const x = point % width, y = Math.floor(point / width);
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if ((!dx && !dy) || x + dx < 0 || x + dx >= width || y + dy < 0 || y + dy >= height) continue;
+          const neighbour = point + dy * width + dx;
+          if (labels[neighbour] || pixels[neighbour * 4 + 3] < 128) continue;
+          labels[neighbour] = label;
+          queue[tail++] = neighbour;
+        }
+      }
+    }
+    sizes.push(tail);
+    largest = Math.max(largest, tail);
+  }
+  // Keep each substantial subject, including separate people in group photos.
+  // Tiny detached segmentation fragments must not gain a large white outline.
+  const minimum = Math.max(16, largest * 0.002);
+  for (let point = 0; point < count; point++) {
+    pixels[point * 4 + 3] = labels[point] && sizes[labels[point]] >= minimum ? 255 : 0;
+  }
+}
+
 export function styledPhoto(
   source: string,
   effects: PhotoEffects,
@@ -96,9 +133,7 @@ export function styledPhoto(
     // Use the confident subject for the outline; keep the original soft alpha
     // on the photograph itself so hair and antialiased edges remain intact.
     const silhouettePixels = mask.getImageData(0, 0, width, height);
-    for (let i = 3; i < silhouettePixels.data.length; i += 4) {
-      silhouettePixels.data[i] = silhouettePixels.data[i] >= 128 ? 255 : 0;
-    }
+    cleanOutlineMask(silhouettePixels.data, width, height);
     mask.putImageData(silhouettePixels, 0, 0);
     mask.globalCompositeOperation = "source-in";
     mask.fillStyle = effects.outlineColor;
