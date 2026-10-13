@@ -14,6 +14,7 @@ export interface Author {
   avatarUrl: string | null;
 }
 export interface MediaAsset {
+  source?: import('./template').SlideImage['source'];
   id: string;
   name: string;
   originalName: string;

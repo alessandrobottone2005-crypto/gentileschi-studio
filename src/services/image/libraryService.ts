@@ -33,6 +33,7 @@ export async function getMediaLibrary(): Promise<MediaAsset[]> {
     createdAt: row.created_at,
     storagePath: `cloud:${row.name}`,
     previewUrl: signedUrls.get(row.name) || null,
+    source: row.source?.provider === 'pixabay' ? row.source : undefined,
   }));
 }
 export async function downloadMedia(asset: MediaAsset): Promise<void> {

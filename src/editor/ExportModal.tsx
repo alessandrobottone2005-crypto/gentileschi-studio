@@ -3,6 +3,7 @@ import { Project } from '../types/template';
 import { downloadSingleSlideBlob, downloadCarouselZip, formatProjectSlug } from '../services/export/exportEngine';
 import { X, Download, Archive, Loader2, CheckCircle2 } from 'lucide-react';
 import { useDialogFocus } from './useDialogFocus';
+import { FORMATS } from '../types/scene';
 
 interface ExportModalProps {
   project: Project;
@@ -25,12 +26,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   const [errorMessage, setErrorMessage] = useState('');
 
   const slug = formatProjectSlug(project.title);
+  const dimensions = FORMATS[project.format || 'portrait'];
   const dialogRef = useDialogFocus(onClose);
 
   const handleExportCurrent = async () => {
     setIsExporting(true);
     setErrorMessage('');
-    setStatusMessage('Rendering slide ad alta risoluzione (1080×1350)...');
+    setStatusMessage(`Rendering slide (${dimensions.width} × ${dimensions.height})…`);
     try {
       const blob = await renderCurrentSlideToBlob();
       downloadSingleSlideBlob(blob, project.title, activeSlideIndex);
@@ -111,7 +113,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         <div style={{ padding: 14, backgroundColor: '#141842', borderRadius: 8, border: '1px solid #232a68' }}>
           <div style={{ fontSize: 13, color: '#ffffff', fontWeight: 600 }}>Specifiche Instagram Ottimali:</div>
           <div style={{ fontSize: 12, color: '#8c95c8', marginTop: 4 }}>
-            • Formato verticale: <strong>4:5 (1080 × 1350 px)</strong><br />
+            • Formato: <strong>{dimensions.label} ({dimensions.width} × {dimensions.height} px)</strong><br />
             • Nomenclatura ordinata: <code>{slug}-01.png</code>, <code>{slug}-02.png</code>...<br />
             • Compressione lossless con font e decorazioni vettoriali native.
           </div>

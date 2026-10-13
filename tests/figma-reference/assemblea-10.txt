@@ -1,0 +1,235 @@
+const imgArtemisiaKeyVisual = "https://www.figma.com/api/mcp/asset/228eae89-4259-4393-8efb-6ef99ffcc57c.png";
+const imgImage = "https://www.figma.com/api/mcp/asset/f99a1863-39fa-4897-9d40-41a659bbdccb.png";
+const imgImage1 = "https://www.figma.com/api/mcp/asset/d453b8eb-c2d4-4f9a-b3e5-880035aa62cb.png";
+const imgCollageSticker = "https://www.figma.com/api/mcp/asset/deaa7e94-da1a-4e6c-b1d1-3a2ea180a441.svg";
+const imgLogoCompleto = "https://www.figma.com/api/mcp/asset/4e5cc9f3-7bf7-4621-aa07-1d926cb3d07c.svg";
+const imgPittogramma = "https://www.figma.com/api/mcp/asset/3f4929b2-515a-4cce-9f49-1707c094f58a.svg";
+
+type GentileschiBadgeNumeratoProps = {
+  className?: string;
+  number?: string;
+};
+
+function GentileschiBadgeNumerato({ className, number = "01" }: GentileschiBadgeNumeratoProps) {
+  return (
+    <div className={className || "bg-[var(--gentileschi-brand,#2e80ff)] content-stretch flex items-center justify-center relative rounded-[32px] size-[64px]"} data-node-id="30:231" data-name="Gentileschi/Badge numerato">
+      <p className="[word-break:break-word] font-['Inter:Black'] font-black leading-[32px] not-italic relative shrink-0 text-[28px] text-[color:var(--gentileschi-white,white)] text-center w-[48px]" data-node-id="30:232">
+        {number}
+      </p>
+    </div>
+  );
+}
+
+export default function Assemblea10() {
+  return (
+    <div className="bg-[#eaf3ff] content-stretch flex flex-col gap-[var(--gentileschi-space-32,32px)] items-start relative size-full" data-node-id="53:3203" data-name="assemblea-10">
+      <div className="[word-break:break-word] content-stretch flex flex-col gap-[8px] items-start not-italic relative shrink-0 text-[color:var(--gentileschi-navy,#102a52)] w-[3432px]" data-node-id="53:3204" data-name="Descrizione preset">
+        <p className="font-['Inter:Bold'] font-bold leading-[44px] relative shrink-0 text-[36px] w-[3432px]" data-node-id="53:3205">
+          10 / EDITORIALE LIME
+        </p>
+        <p className="font-['Inter:Regular'] font-normal leading-[40px] relative shrink-0 text-[28px] w-[3432px]" data-node-id="53:3206">
+          Blocchi sfalsati · #2E80FF / #102A52 / #DFFF2F · Artemisia fissa + 2 fotografie variabili
+        </p>
+      </div>
+      <div className="content-stretch flex gap-[96px] h-[1350px] items-start relative shrink-0 w-[3432px]" data-node-id="53:3207" data-name="Slide">
+        <div className="bg-[var(--assemblea-10-bg,#2e80ff)] h-[1350px] overflow-clip relative shrink-0 w-[1080px]" data-node-id="53:3208" data-name="assemblea-10/cover">
+          <div className="absolute bg-[var(--assemblea-10-secondary,#102a52)] h-[784px] left-[904px] top-[296px] w-[176px]" data-node-id="53:3209" data-name="Collage / blocco laterale" />
+          <div className="absolute bg-[var(--assemblea-10-secondary,#102a52)] h-[238px] left-0 top-[1112px] w-[1080px]" data-node-id="53:3210" data-name="Collage / blocco inferiore" />
+          <div className="absolute left-[904px] size-[104px] top-[1136px]" data-node-id="53:3211" data-name="Collage / sticker">
+            <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgCollageSticker} />
+          </div>
+          <div className="absolute bg-[var(--assemblea-10-accent,#dfff2f)] h-[12px] left-[880px] top-[192px] w-[136px]" data-node-id="53:3212" data-name="Collage / filetti" />
+          <div className="absolute h-[113.403px] left-[64px] top-[56px] w-[272px]" data-node-id="53:3213" data-name="logo">
+            <div className="absolute inset-[12.3%_5.13%]" data-node-id="I53:3213;53:3449" data-name="LogoCompleto">
+              <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgLogoCompleto} />
+            </div>
+          </div>
+          <div className="[word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[0] left-[732px] not-italic text-[24px] text-[color:var(--assemblea-10-text,white)] top-[72px] w-[284px]" data-node-id="53:3214">
+            <p className="leading-[32px] mb-0">ASSEMBLEA</p>
+            <p className="leading-[32px]">D’ISTITUTO</p>
+          </div>
+          <p className="[word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[32px] left-[732px] not-italic text-[24px] text-[color:var(--assemblea-10-text,white)] top-[144px] w-[140px]" data-node-id="53:3215">
+            01 / 03
+          </p>
+          <div className="absolute flex h-[281.954px] items-center justify-center left-[64px] top-[222.03px] w-[954.796px]" data-node-id="53:3216">
+            <div className="flex-none rotate-[-0.6deg]">
+              <div className="bg-[var(--assemblea-10-surface,white)] content-stretch drop-shadow-[12px_16px_0px_rgba(16,42,82,0.22)] flex flex-col items-start px-[var(--gentileschi-space-32,32px)] py-[24px] relative w-[952px]" data-name="title / cartiglio">
+                <div className="[word-break:break-word] font-['Inter:Black'] font-black leading-[0] not-italic relative shrink-0 text-[120px] text-[color:var(--assemblea-10-ink,#102a52)] tracking-[-4.8px] w-[888px]" data-node-id="I53:3216;30:234">
+                  <p className="leading-[112px] mb-0">ASSEMBLEA</p>
+                  <p className="leading-[112px]">D’ISTITUTO</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="absolute bg-[var(--assemblea-10-surface,white)] h-[384px] left-[64px] shadow-[8px_12px_0px_0px_rgba(10,26,56,0.2)] top-[536px] w-[488px]" data-node-id="53:3217" data-name="Data / cartiglio" />
+          <p className="[word-break:break-word] absolute font-['Inter:Black'] font-black leading-[352px] left-[88px] not-italic text-[360px] text-[color:var(--assemblea-10-ink,#102a52)] top-[532px] tracking-[-14.4px] w-[584px]" data-node-id="53:3218">
+            20
+          </p>
+          <div className="absolute bg-[var(--assemblea-10-surface,white)] h-[232px] left-[40px] shadow-[8px_12px_0px_0px_rgba(10,26,56,0.2)] top-[908px] w-[520px]" data-node-id="53:3219" data-name="Data / supporto" />
+          <div className="absolute content-stretch flex flex-col gap-[var(--gentileschi-space-16,16px)] items-start left-[64px] top-[924px] w-[480px]" data-node-id="53:3220" data-name="Data e orari">
+            <p className="[word-break:break-word] font-['Inter:Black'] font-black leading-[68px] not-italic relative shrink-0 text-[64px] text-[color:var(--gentileschi-navy,#102a52)] w-[464px]" data-node-id="53:3221">
+              NOVEMBRE
+            </p>
+            <div className="bg-[var(--assemblea-10-accent,#dfff2f)] h-[10px] relative shrink-0 w-[240px]" data-node-id="53:3222" data-name="Collage / sottolineatura" />
+            <div className="[word-break:break-word] font-['Inter:Bold'] font-bold leading-[0] not-italic relative shrink-0 text-[32px] text-[color:var(--gentileschi-navy,#102a52)] w-[448px]" data-node-id="53:3223">
+              <p className="leading-[40px] mb-0">DALLE ORE 10:00</p>
+              <p className="leading-[40px]">ALLE ORE 13:00</p>
+            </div>
+          </div>
+          <div className="absolute h-[800px] left-[516px] top-[550px] w-[591.566px]" data-node-id="53:3224" data-name="Artemisia / keyVisual">
+            <img alt="" className="absolute inset-0 max-w-none object-contain pointer-events-none size-full" src={imgArtemisiaKeyVisual} />
+          </div>
+        </div>
+        <div className="bg-[var(--assemblea-10-bg,#2e80ff)] h-[1350px] overflow-clip relative shrink-0 w-[1080px]" data-node-id="53:3225" data-name="assemblea-10/agenda">
+          <div className="absolute bg-[var(--assemblea-10-secondary,#102a52)] h-[784px] left-[904px] top-[296px] w-[176px]" data-node-id="53:3226" data-name="Collage / blocco laterale" />
+          <div className="absolute bg-[var(--assemblea-10-secondary,#102a52)] h-[238px] left-0 top-[1112px] w-[1080px]" data-node-id="53:3227" data-name="Collage / blocco inferiore" />
+          <div className="absolute left-[904px] size-[104px] top-[1136px]" data-node-id="53:3228" data-name="Collage / sticker">
+            <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgCollageSticker} />
+          </div>
+          <div className="absolute bg-[var(--assemblea-10-accent,#dfff2f)] h-[12px] left-[880px] top-[192px] w-[136px]" data-node-id="53:3229" data-name="Collage / filetti" />
+          <div className="absolute h-[73.53px] left-[64px] top-[56px] w-[120px]" data-node-id="53:3230" data-name="logo">
+            <div className="absolute inset-[17.18%_10.53%]" data-node-id="I53:3230;53:3684" data-name="Pittogramma">
+              <div className="absolute inset-[0_-0.29%_-0.57%_0]">
+                <img alt="" className="block max-w-none size-full" src={imgPittogramma} />
+              </div>
+            </div>
+          </div>
+          <div className="[word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[0] left-[732px] not-italic text-[24px] text-[color:var(--assemblea-10-text,white)] top-[72px] w-[284px]" data-node-id="53:3231">
+            <p className="leading-[32px] mb-0">ASSEMBLEA</p>
+            <p className="leading-[32px]">D’ISTITUTO</p>
+          </div>
+          <p className="[word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[32px] left-[732px] not-italic text-[24px] text-[color:var(--assemblea-10-text,white)] top-[144px] w-[140px]" data-node-id="53:3232">
+            02 / 03
+          </p>
+          <p className="[word-break:break-word] absolute font-['Inter:Black'] font-black leading-[152px] left-[64px] not-italic text-[152px] text-[color:var(--assemblea-10-text,white)] top-[208px] w-[720px]" data-node-id="53:3233">
+            O.D.G.
+          </p>
+          <div className="absolute bg-[var(--assemblea-10-surface,white)] h-[48px] left-[64px] top-[352px] w-[344px]" data-node-id="53:3234" data-name="Sottotitolo / cartiglio">
+            <p className="[word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[32px] left-[16px] not-italic text-[24px] text-[color:var(--assemblea-10-ink,#102a52)] top-[8px] w-[312px]" data-node-id="53:3235">
+              ORDINE DEL GIORNO
+            </p>
+          </div>
+          <div className="absolute content-stretch flex flex-col gap-[24px] h-[934px] items-end left-[64px] overflow-clip top-[416px] w-[952px]" data-node-id="53:3236" data-name="Contenuto adattivo / agenda">
+            <div className="content-stretch flex flex-col gap-[var(--gentileschi-space-16,16px)] items-start relative shrink-0 w-[952px]" data-node-id="53:3237" data-name="items">
+              <div className="bg-[var(--assemblea-10-surface,white)] content-stretch drop-shadow-[8px_12px_0px_rgba(10,26,56,0.2)] flex gap-[var(--gentileschi-space-24,24px)] items-center pl-[var(--gentileschi-space-16,16px)] pr-[var(--gentileschi-space-24,24px)] py-[16px] relative shrink-0 w-[952px]" data-node-id="53:3238" data-name="item-01">
+                <GentileschiBadgeNumerato className="bg-[var(--gentileschi-brand,#2e80ff)] content-stretch flex items-center justify-center relative rounded-[32px] shrink-0 size-[64px]" />
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[40px] not-italic relative shrink-0 text-[30px] text-[color:var(--assemblea-10-ink,#102a52)] w-[824px]" data-node-id="53:3240">
+                  Proposte degli studenti e confronto.
+                </p>
+              </div>
+              <div className="bg-[var(--assemblea-10-surface,white)] content-stretch drop-shadow-[8px_12px_0px_rgba(10,26,56,0.2)] flex gap-[var(--gentileschi-space-24,24px)] items-center pl-[var(--gentileschi-space-16,16px)] pr-[var(--gentileschi-space-24,24px)] py-[16px] relative shrink-0 w-[952px]" data-node-id="53:3241" data-name="item-02">
+                <GentileschiBadgeNumerato className="bg-[var(--gentileschi-brand,#2e80ff)] content-stretch flex items-center justify-center relative rounded-[32px] shrink-0 size-[64px]" number="02" />
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[40px] not-italic relative shrink-0 text-[30px] text-[color:var(--assemblea-10-ink,#102a52)] w-[824px]" data-node-id="53:3243">
+                  Aggiornamenti sulle attività d’istituto.
+                </p>
+              </div>
+              <div className="bg-[var(--assemblea-10-surface,white)] content-stretch drop-shadow-[8px_12px_0px_rgba(10,26,56,0.2)] flex gap-[var(--gentileschi-space-24,24px)] items-center pl-[var(--gentileschi-space-16,16px)] pr-[var(--gentileschi-space-24,24px)] py-[16px] relative shrink-0 w-[952px]" data-node-id="53:3244" data-name="item-03">
+                <GentileschiBadgeNumerato className="bg-[var(--gentileschi-brand,#2e80ff)] content-stretch flex items-center justify-center relative rounded-[32px] shrink-0 size-[64px]" number="03" />
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[40px] not-italic relative shrink-0 text-[30px] text-[color:var(--assemblea-10-ink,#102a52)] w-[824px]" data-node-id="53:3246">
+                  Organizzazione dei prossimi progetti.
+                </p>
+              </div>
+              <div className="bg-[var(--assemblea-10-surface,white)] border-4 border-[var(--assemblea-10-accent,#dfff2f)] border-solid content-stretch drop-shadow-[8px_12px_0px_rgba(10,26,56,0.2)] flex gap-[var(--gentileschi-space-24,24px)] items-center pl-[var(--gentileschi-space-16,16px)] pr-[var(--gentileschi-space-24,24px)] py-[16px] relative shrink-0 w-[960px]" data-node-id="53:3247" data-name="item-04">
+                <div className="bg-[var(--assemblea-10-accent,#dfff2f)] content-stretch flex items-center justify-center relative rounded-[32px] shrink-0 size-[64px]" data-node-id="53:3248" data-name="number">
+                  <p className="[word-break:break-word] font-['Inter:Black'] font-black leading-[32px] not-italic relative shrink-0 text-[28px] text-[color:var(--gentileschi-navy,#102a52)] text-center w-[48px]" data-node-id="I53:3248;30:232">
+                    04
+                  </p>
+                </div>
+                <p className="[word-break:break-word] font-['Inter:Bold'] font-bold leading-[40px] not-italic relative shrink-0 text-[32px] text-[color:var(--assemblea-10-ink,#102a52)] w-[824px]" data-node-id="53:3249">
+                  SPAZIO ALLE IDEE DELLE CLASSI
+                </p>
+              </div>
+              <div className="bg-[var(--assemblea-10-surface,white)] content-stretch drop-shadow-[8px_12px_0px_rgba(10,26,56,0.2)] flex gap-[var(--gentileschi-space-24,24px)] items-center pl-[var(--gentileschi-space-16,16px)] pr-[var(--gentileschi-space-24,24px)] py-[16px] relative shrink-0 w-[952px]" data-node-id="53:3250" data-name="item-05">
+                <GentileschiBadgeNumerato className="bg-[var(--gentileschi-brand,#2e80ff)] content-stretch flex items-center justify-center relative rounded-[32px] shrink-0 size-[64px]" number="05" />
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[40px] not-italic relative shrink-0 text-[30px] text-[color:var(--assemblea-10-ink,#102a52)] w-[824px]" data-node-id="53:3252">
+                  Varie ed eventuali.
+                </p>
+              </div>
+            </div>
+            <div className="content-stretch flex flex-[1_0_0] items-start justify-between min-h-px overflow-clip relative w-full" data-node-id="53:3253" data-name="Richiamo e fotografia">
+              <div className="content-stretch flex flex-col h-full items-start justify-end overflow-clip pb-[64px] relative shrink-0 w-[352px]" data-node-id="53:3254" data-name="Richiamo / area protetta">
+                <div className="bg-[var(--gentileschi-logo-surface,white)] content-stretch flex flex-col gap-[8px] items-start overflow-clip p-[24px] relative shrink-0 w-[336px]" data-node-id="53:3255" data-name="Richiamo / cartiglio">
+                  <div className="bg-[var(--assemblea-10-accent,#dfff2f)] h-[8px] relative shrink-0 w-[288px]" data-node-id="53:3256" data-name="Collage / accento richiamo" />
+                  <div className="[word-break:break-word] font-['Inter:Black'] font-black leading-[0] not-italic relative shrink-0 text-[36px] text-[color:var(--gentileschi-ink,#102a52)] w-[288px]" data-node-id="53:3257">
+                    <p className="leading-[40px] mb-0">PARLIAMONE</p>
+                    <p className="leading-[40px]">INSIEME.</p>
+                  </div>
+                </div>
+              </div>
+              <div className="h-full relative shrink-0 w-[600px]" data-node-id="53:3258" data-name="image">
+                <img alt="" className="absolute inset-0 max-w-none object-contain pointer-events-none size-full" src={imgImage} />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="bg-[var(--assemblea-10-bg,#2e80ff)] h-[1350px] overflow-clip relative shrink-0 w-[1080px]" data-node-id="53:3259" data-name="assemblea-10/notice">
+          <div className="absolute bg-[var(--assemblea-10-secondary,#102a52)] h-[784px] left-[904px] top-[296px] w-[176px]" data-node-id="53:3260" data-name="Collage / blocco laterale" />
+          <div className="absolute bg-[var(--assemblea-10-secondary,#102a52)] h-[238px] left-0 top-[1112px] w-[1080px]" data-node-id="53:3261" data-name="Collage / blocco inferiore" />
+          <div className="absolute left-[904px] size-[104px] top-[1136px]" data-node-id="53:3262" data-name="Collage / sticker">
+            <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgCollageSticker} />
+          </div>
+          <div className="absolute bg-[var(--assemblea-10-accent,#dfff2f)] h-[12px] left-[880px] top-[192px] w-[136px]" data-node-id="53:3263" data-name="Collage / filetti" />
+          <div className="absolute h-[73.53px] left-[64px] top-[56px] w-[120px]" data-node-id="53:3264" data-name="logo">
+            <div className="absolute inset-[17.18%_10.53%]" data-node-id="I53:3264;53:3684" data-name="Pittogramma">
+              <div className="absolute inset-[0_-0.29%_-0.57%_0]">
+                <img alt="" className="block max-w-none size-full" src={imgPittogramma} />
+              </div>
+            </div>
+          </div>
+          <div className="[word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[0] left-[732px] not-italic text-[24px] text-[color:var(--assemblea-10-text,white)] top-[72px] w-[284px]" data-node-id="53:3265">
+            <p className="leading-[32px] mb-0">ASSEMBLEA</p>
+            <p className="leading-[32px]">D’ISTITUTO</p>
+          </div>
+          <p className="[word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[32px] left-[732px] not-italic text-[24px] text-[color:var(--assemblea-10-text,white)] top-[144px] w-[140px]" data-node-id="53:3266">
+            03 / 03
+          </p>
+          <p className="[word-break:break-word] absolute font-['Inter:Black'] font-black leading-[100px] left-[64px] not-italic text-[96px] text-[color:var(--assemblea-10-text,white)] top-[224px] w-[952px]" data-node-id="53:3267">
+            IMPORTANTE!
+          </p>
+          <div className="absolute bg-[var(--assemblea-10-surface,white)] content-stretch drop-shadow-[8px_12px_0px_rgba(10,26,56,0.2)] flex gap-[var(--gentileschi-space-32,32px)] h-[176px] items-center left-[64px] px-[32px] py-[24px] top-[376px] w-[952px]" data-node-id="53:3268" data-name="Avviso / cartiglio">
+            <p className="[word-break:break-word] font-['Inter:Black'] font-black leading-[72px] not-italic relative shrink-0 text-[64px] text-[color:var(--assemblea-10-ink,#102a52)] w-[240px]" data-node-id="53:3269">
+              TUTTI
+            </p>
+            <div className="[word-break:break-word] font-['Inter:Bold'] font-bold leading-[0] not-italic relative shrink-0 text-[32px] text-[color:var(--assemblea-10-ink,#102a52)] w-[388px]" data-node-id="53:3270">
+              <p className="leading-[40px] mb-0">GLI STUDENTI</p>
+              <p className="leading-[40px]">SONO INVITATI</p>
+            </div>
+            <div className="bg-[var(--assemblea-10-accent,#dfff2f)] h-[72px] relative shrink-0 w-[184px]" data-node-id="53:3271" data-name="Badge / etichetta">
+              <div className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[0] left-[92px] not-italic text-[24px] text-[color:var(--gentileschi-navy,#102a52)] text-center top-[4px] w-[160px]" data-node-id="53:3272">
+                <p className="leading-[32px] mb-0">LA TUA</p>
+                <p className="leading-[32px]">VOCE</p>
+              </div>
+            </div>
+          </div>
+          <div className="absolute content-stretch flex flex-col gap-[24px] h-[750px] items-end left-[64px] overflow-clip top-[600px] w-[952px]" data-node-id="53:3273" data-name="Contenuto adattivo / notice">
+            <div className="bg-[var(--assemblea-10-surface,white)] content-stretch drop-shadow-[8px_12px_0px_rgba(10,26,56,0.2)] flex flex-col gap-[var(--gentileschi-space-24,24px)] items-start px-[var(--gentileschi-space-32,32px)] py-[32px] relative shrink-0 w-[952px]" data-node-id="53:3274" data-name="Paragrafi / cartiglio">
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[40px] not-italic relative shrink-0 text-[30px] text-[color:var(--assemblea-10-ink,#102a52)] w-[888px]" data-node-id="53:3275">
+                L’assemblea è il momento per condividere proposte, discutere le esigenze delle classi e costruire insieme le prossime attività.
+              </p>
+              <div className="bg-[var(--assemblea-10-accent,#dfff2f)] h-[8px] relative shrink-0 w-[888px]" data-node-id="53:3276" data-name="Collage / separatore" />
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[40px] not-italic relative shrink-0 text-[30px] text-[color:var(--assemblea-10-ink,#102a52)] w-[888px]" data-node-id="53:3277">
+                Porta le tue idee e confrontati con i rappresentanti. La partecipazione di ciascuno rende la scuola più aperta e vicina agli studenti.
+              </p>
+            </div>
+            <div className="content-stretch flex flex-[1_0_0] items-start min-h-px overflow-clip relative w-full" data-node-id="53:3278" data-name="CTA e fotografia">
+              <div className="content-stretch flex flex-col h-full items-start justify-end overflow-clip pb-[64px] relative shrink-0 w-[432px]" data-node-id="53:3279" data-name="CTA / area protetta">
+                <div className="bg-[var(--assemblea-10-surface,white)] content-stretch drop-shadow-[8px_12px_0px_rgba(10,26,56,0.2)] flex flex-col gap-[12px] items-start p-[24px] relative shrink-0 w-[432px]" data-node-id="53:3280" data-name="CTA / cartiglio">
+                  <div className="bg-[var(--assemblea-10-accent,#dfff2f)] h-[8px] relative shrink-0 w-[384px]" data-node-id="53:3281" data-name="Collage / accento CTA" />
+                  <div className="[word-break:break-word] font-['Inter:Black'] font-black leading-[0] not-italic relative shrink-0 text-[36px] text-[color:var(--assemblea-10-ink,#102a52)] w-[384px]" data-node-id="53:3282">
+                    <p className="leading-[40px] mb-0">PARTECIPARE FA</p>
+                    <p className="leading-[40px]">LA DIFFERENZA</p>
+                  </div>
+                </div>
+              </div>
+              <div className="h-full relative shrink-0 w-[520px]" data-node-id="53:3283" data-name="image">
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                  <img alt="" className="absolute h-[138.62%] left-0 max-w-none top-[-8.37%] w-full" src={imgImage1} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

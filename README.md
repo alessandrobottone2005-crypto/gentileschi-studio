@@ -1,5 +1,28 @@
 # Gentileschi Studio 🎨⚡
 
+## Editor, temi e fotografie — anteprima
+
+L’editor usa uno spazio di lavoro chiaro con Temi, Elementi, Testo, Foto, Caricamenti e Dati. La tela resta visibile; strumenti contestuali, livelli, modifica diretta dei testi, ritaglio, allineamenti, distribuzione, zoom e spostamento della vista funzionano anche con pannelli touch. I tre formati sono 1080 × 1350, 1080 × 1080 e 1080 × 1920. Annulla/Ripristina, campi sincronizzati, cambio tema e bozze AI conservano il modello strutturato.
+
+**Catalogo:** 13 temi ufficiali / 39 composizioni. I dodici set Figma sono stati acquisiti tramite `get_design_context`, con asset originali e geometrie convertite in composizioni modificabili. Le reference native per il confronto sono in `tests/figma-reference`; gli script `scripts/import-figma-themes.mjs` e `scripts/capture-figma-themes.mjs` consentono la rigenerazione quando gli URL Figma sono ancora disponibili e il server locale è attivo. I progetti conservano una copia indipendente del tema.
+
+**Fotografie:** ricerca Pixabay in italiano con filtri di orientamento, anteprima e provenienza, aggiunta o sostituzione, archivio persistente, scontorno automatico locale e Stile Gentileschi regolabile (bianco e nero, puntini, bordo e ombra). Originale, scontorno, ritaglio ed effetti restano separati e riutilizzabili. La stessa immagine elaborata serve tela, miniature ed esportazione.
+
+Il servizio `/api/photos` verifica la sessione Supabase, protegge la chiave Pixabay, conserva le ricerche per 24 ore e limita le richieste upstream. Acquisisce solo immagini HTTPS del provider, limita i download a 10 MB e carica le foto nel bucket privato con le autorizzazioni dell’utente. Originali Pixabay non vengono collegati permanentemente da URL esterni.
+
+### Configurazione cloud e verifica reale
+
+- Il 13 ottobre 2026 sono state applicate sul progetto effettivo `aukspzeknnbhvdhpntiu`, tramite SQL Editor, le migrazioni `20261012212457_graphics_themes.sql` e `20261013074040_pixabay_cache.sql` in un’unica transazione. Account, progetti esistenti e bucket privato erano già configurati. Non ripetere la migrazione Pixabay su questa installazione.
+- La chiave Pixabay è conservata in `.env.local`, ignorato da Git, con permessi `600`. Il server usa `PIXABAY_API_KEY`, le impostazioni pubbliche Supabase già presenti e `SUPABASE_SERVER_KEY` oppure `SUPABASE_SERVICE_ROLE_KEY`. Nessuna chiave privata va impostata con prefisso `VITE_`. Dopo la configurazione riavviare il server.
+- Verificati ricerca reale in italiano, cache condivisa di 24 ore, acquisizione Pixabay nel bucket privato, scontorno locale, stile, salvataggio e ricaricamento cloud ed esportazione PNG. Il progetto dimostrativo si chiama `Anteprima Pixabay e cloud`.
+- `supabase/tests-graphics-cloud.sql` ha verificato sul database reale, con le due identità esistenti, lettura/modifica/eliminazione dei temi condivisi, attribuzione del creatore, conflitti di revisione, indipendenza dei progetti e accesso riservato alla cache. Tutte le modifiche di questo test sono state annullate con rollback; la prova dei permessi non equivale a due sessioni contemporanee nel browser.
+
+In assenza di configurazione, il pannello Foto mostra un messaggio esplicito e lascia disponibili caricamenti e libreria. Il server Vite espone la stessa route fotografica per la verifica locale; in produzione la route è eseguita da Vercel.
+
+Verifica: `npm test`, `npm run build`, `npm run test:browser`. Le prove confrontano tutte le composizioni importate con le reference native Figma e conservano le tre originali, verificano editing, temi, ricaricamento, foto, ritaglio, effetti, export e mobile. La prova fotografica del bordo verifica che i residui quasi trasparenti dello scontorno non vengano amplificati in anelli bianchi.
+
+Anteprima senza modificare dati cloud: `VITE_SUPABASE_URL='' VITE_SUPABASE_ANON_KEY='' npm run dev -- --host 127.0.0.1 --port 5174`. Nessuna pubblicazione in produzione è stata effettuata.
+
 Web application specialistica e professionale progettata per i rappresentanti degli studenti del **Liceo Gentileschi di Napoli**, per la creazione automatica di post Instagram singoli e caroselli ad altissima fedeltà visiva, basati sul Design System ufficiale Figma.
 
 ---
@@ -8,7 +31,7 @@ Web application specialistica e professionale progettata per i rappresentanti de
 
 Permettere a studenti e rappresentanti d'istituto senza competenze grafiche di generare post Instagram impeccabili, coerenti al 100% con l'identità visiva del Liceo Gentileschi, modificando semplicemente testi, date, orari, punti all'ordine del giorno e fotografie.
 
-- **Non un clone di Canva**: uno strumento specializzato, veloce, intuitivo, affidabile ed editoriale.
+- **Flusso familiare a Canva**: strumenti essenziali e contestuali per personalizzare i preset Gentileschi.
 - **Formato Instagram standard**: Risoluzione nativa **1080 × 1350 pixel** (rapporto 4:5).
 - **Elaborazione locale, archivio condiviso**: la rimozione dello sfondo avviene nel browser. In modalità cloud, le fotografie vengono caricate in un bucket Supabase privato e sono accessibili a tutti gli utenti registrati.
 - **Integrazione AI con Gemini**: Assistente intelligente per la generazione strutturata di slide e caption accattivanti a partire da una descrizione in linguaggio naturale.

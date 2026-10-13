@@ -1,6 +1,19 @@
-export type TemplateType = 'cover' | 'agenda' | 'notice';
+import type {
+  GraphicTheme,
+  ProjectFormat,
+  SlideScene,
+  ThemeReference,
+} from "./scene";
+export type TemplateType = "cover" | "agenda" | "notice";
 
 export interface SlideImage {
+  assetId?: string;
+  originalAssetId?: string;
+  cutoutStoragePath?: string;
+  cutoutUrl?: string;
+  source?: { provider: 'pixabay'; id: number; author: string; pageUrl: string };
+  effects?: PhotoEffects;
+  crop?: { scale: number; x: number; y: number };
   // Runtime URLs are never written to project storage.
   url?: string;
   originalUrl?: string;
@@ -11,8 +24,20 @@ export interface SlideImage {
   missing?: boolean;
   isTransparent?: boolean;
   scale?: number; // default 1
-  posX?: number;  // px offset
-  posY?: number;  // px offset
+  posX?: number; // px offset
+  posY?: number; // px offset
+}
+
+export interface PhotoEffects {
+  version: 1;
+  enabled: boolean;
+  grayscale: boolean;
+  contrast: number;
+  halftone: number;
+  outline: number;
+  outlineColor: string;
+  shadow: number;
+  shadowColor: string;
 }
 
 export interface CoverSlideContent {
@@ -58,16 +83,26 @@ export interface Slide<T extends TemplateType = TemplateType> {
   id: string;
   templateType: T;
   content: SlideContentMap[T];
+  scene?: SlideScene;
+  customFields?: Record<string, string>;
+  projectSettings?: {
+    format?: ProjectFormat;
+    themeRef?: ThemeReference;
+    themeSnapshot?: GraphicTheme;
+  };
 }
 
 export interface Project {
   id: string;
   title: string;
-  type: 'single' | 'carousel';
+  type: "single" | "carousel";
   createdAt: string;
   updatedAt: string;
   slides: Slide[];
   caption?: string;
   userId?: string;
   revision?: number;
+  format?: ProjectFormat;
+  themeRef?: ThemeReference;
+  themeSnapshot?: GraphicTheme;
 }

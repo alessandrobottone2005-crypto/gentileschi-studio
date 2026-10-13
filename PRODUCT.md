@@ -11,6 +11,8 @@ Rappresentanti degli studenti del Liceo Gentileschi di Napoli, che preparano pos
 ## Product Purpose
 Creare contenuti con template ufficiali, modificarli, generarne testi con AI ed esportarli. Lo studio è condiviso fra tutti gli account Google registrati.
 
+L’editor grafico permette di modificare gli elementi anche da mobile, scegliere e cambiare il tema dell’intero progetto, salvare set di slide come temi riutilizzabili e adattare la composizione a post 4:5, quadrati e stories. Il catalogo contiene tredici temi ufficiali con copertina, agenda e avviso. L’interfaccia chiara riprende il flusso di un editor come Canva, con ricerca Pixabay e stile fotografico regolabile. L’attivazione cloud e le credenziali Pixabay sono descritte nel README.
+
 ## Capabilities and Constraints
 Accesso libero con Google. Editor e amministratori creano, modificano ed eliminano tutti i progetti. Solo gli amministratori gestiscono i ruoli; non sono previsti inviti, sospensioni o cancellazioni account. L'ultimo amministratore non può essere retrocesso. L'area account mostra identità Google, nome personalizzato, contributi personali e quota AI reale. Le fotografie sono condivise in un bucket privato e riutilizzabili dall'editor. I progetti mantengono controlli di revisione per modifiche simultanee. La quota AI mantiene l'azzeramento UTC.
 

@@ -37,3 +37,7 @@ scripts/figma-metrics.json
 # Visual verification captures and transient build measurements
 .impeccable/review/
 .impeccable/build/
+test-results/
+playwright-report/
+supabase/.temp/
+/tests/figma-reference/rendered-*.png

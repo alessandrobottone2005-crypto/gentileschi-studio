@@ -280,6 +280,7 @@ export function MediaPicker({
       const url = await loadMedia(asset.storagePath);
       onSelect({
         storagePath: asset.storagePath,
+        source: asset.source,
         url,
         originalStoragePath: asset.storagePath,
         originalUrl: url,

@@ -1,11 +1,14 @@
 import React from 'react';
 import { Slide, TemplateType } from '../types/template';
-import { TEMPLATE_REGISTRY } from '../templates/registry';
+import { TEMPLATE_REGISTRY, renderSlideTemplate } from '../templates/registry';
+import { TemplateWrapper } from '../templates/TemplateWrapper';
+import { FORMATS, ProjectFormat } from '../types/scene';
 import { createDefaultSlide } from '../engine/defaultData';
 import { Plus, Copy, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface SlideNavigatorProps {
   slides: Slide[];
+  format?: ProjectFormat;
   activeSlideIndex: number;
   onSelectSlide: (index: number) => void;
   onAddSlide: (newSlide: Slide) => void;
@@ -16,6 +19,7 @@ interface SlideNavigatorProps {
 
 export const SlideNavigator: React.FC<SlideNavigatorProps> = ({
   slides,
+  format = 'portrait',
   activeSlideIndex,
   onSelectSlide,
   onAddSlide,
@@ -163,11 +167,7 @@ export const SlideNavigator: React.FC<SlideNavigatorProps> = ({
                   padding: 0,
                 }}
               >
-                <img
-                  src={templateDef.thumbnailUrl}
-                  alt={templateDef.name}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
+                <span aria-hidden="true" style={{ pointerEvents: 'none' }}><TemplateWrapper scale={Math.min(66 / FORMATS[format].width, 84 / FORMATS[format].height)} width={FORMATS[format].width} height={FORMATS[format].height}>{renderSlideTemplate(slide, format)}</TemplateWrapper></span>
                 <span
                   style={{
                     position: 'absolute',

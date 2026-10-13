@@ -1,21 +1,36 @@
-import React from 'react';
+import React from "react";
 
 interface TemplateWrapperProps {
   children: React.ReactNode;
   scale?: number;
   className?: string;
   style?: React.CSSProperties;
+  width?: number;
+  height?: number;
 }
 
-export const TemplateWrapper = React.forwardRef<HTMLDivElement, TemplateWrapperProps>(
-  ({ children, scale = 1, className = '', style = {} }, ref) => {
+export const TemplateWrapper = React.forwardRef<
+  HTMLDivElement,
+  TemplateWrapperProps
+>(
+  (
+    {
+      children,
+      scale = 1,
+      className = "",
+      style = {},
+      width = 1080,
+      height = 1350,
+    },
+    ref,
+  ) => {
     return (
       <div
         style={{
-          width: 1080 * scale,
-          height: 1350 * scale,
-          overflow: 'hidden',
-          position: 'relative',
+          width: width * scale,
+          height: height * scale,
+          overflow: "hidden",
+          position: "relative",
           flexShrink: 0,
           ...style,
         }}
@@ -24,15 +39,15 @@ export const TemplateWrapper = React.forwardRef<HTMLDivElement, TemplateWrapperP
         <div
           ref={ref}
           style={{
-            width: 1080,
-            height: 1350,
+            width,
+            height,
             transform: `scale(${scale})`,
-            transformOrigin: 'top left',
-            position: 'absolute',
+            transformOrigin: "top left",
+            position: "absolute",
             top: 0,
             left: 0,
-            overflow: 'hidden',
-            boxSizing: 'border-box',
+            overflow: "hidden",
+            boxSizing: "border-box",
           }}
           data-template-frame="true"
         >
@@ -40,5 +55,5 @@ export const TemplateWrapper = React.forwardRef<HTMLDivElement, TemplateWrapperP
         </div>
       </div>
     );
-  }
+  },
 );

@@ -13,7 +13,16 @@ export async function removeImageBackground(
   onProgress?: (p: BgRemovalProgress) => void
 ): Promise<string> {
   try {
-    const blob = await removeBackground(imageSource, {
+    // The model library resolves relative strings against its own module URL.
+    // Decode a Blob first so local assets and private-bucket URLs behave alike.
+    let input: File | Blob = imageSource as File | Blob;
+    if (typeof imageSource === 'string') {
+      const response = await fetch(new URL(imageSource, window.location.href));
+      if (!response.ok) throw new Error('La fotografia non è disponibile.');
+      input = await response.blob();
+    }
+    const blob = await removeBackground(input, {
+      model: 'isnet_quint8',
       progress: (key: string, current: number, total: number) => {
         const percent = total > 0 ? Math.round((current / total) * 100) : 0;
         onProgress?.({

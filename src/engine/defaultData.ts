@@ -8,6 +8,7 @@ export const DEFAULT_COVER_CONTENT: CoverSlideContent = {
   timeSlot: "DALLE ORE 10:00\nALLE ORE 13:00",
   image: {
     assetKey: 'cover',
+    isTransparent: true,
     url: DEFAULT_IMAGES.cover,
     scale: 1,
     posX: 0,
@@ -27,6 +28,7 @@ export const DEFAULT_AGENDA_CONTENT: AgendaSlideContent = {
   ],
   image: {
     assetKey: 'agenda',
+    isTransparent: true,
     url: DEFAULT_IMAGES.agenda,
     scale: 1,
     posX: 0,
@@ -44,6 +46,7 @@ export const DEFAULT_NOTICE_CONTENT: NoticeSlideContent = {
   ctaText: "PARTECIPARE FA LA DIFFERENZA",
   image: {
     assetKey: 'notice',
+    isTransparent: true,
     url: DEFAULT_IMAGES.notice,
     scale: 1,
     posX: 0,
@@ -55,17 +58,17 @@ export function createDefaultSlide(templateType: 'cover' | 'agenda' | 'notice'):
   const id = `slide-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
   switch (templateType) {
     case 'cover':
-      return { id, templateType: 'cover', content: { ...DEFAULT_COVER_CONTENT } };
+      return { id, templateType: 'cover', content: JSON.parse(JSON.stringify(DEFAULT_COVER_CONTENT)) };
     case 'agenda':
       return { id, templateType: 'agenda', content: JSON.parse(JSON.stringify(DEFAULT_AGENDA_CONTENT)) };
     case 'notice':
-      return { id, templateType: 'notice', content: { ...DEFAULT_NOTICE_CONTENT } };
+      return { id, templateType: 'notice', content: JSON.parse(JSON.stringify(DEFAULT_NOTICE_CONTENT)) };
   }
 }
 
 export function createInitialProject(type: 'single' | 'carousel' = 'carousel'): Project {
   return {
-    id: `proj-${Date.now()}`,
+    id: `proj-${crypto.randomUUID()}`,
     title: "Assemblea d'Istituto - Ottobre",
     type,
     createdAt: new Date().toISOString(),
