@@ -54,6 +54,19 @@ async function data(page: Page) {
 }
 const nodes = (list: any[]): any[] =>
   list.flatMap((n) => [n, ...nodes(n.children || [])]);
+test("tablet theme panel leaves the canvas visible within the viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 796, height: 864 });
+  await create(page);
+  for (const width of [760, 796, 900]) {
+    await page.setViewportSize({ width, height: 864 });
+    const panel = (await page.locator(".workspace-panel").boundingBox())!;
+    const canvas = (await page.locator(".canvas-viewport").boundingBox())!;
+    expect(panel.width).toBeLessThan(350);
+    expect(canvas.width).toBeGreaterThan(250);
+    expect(canvas.x).toBeGreaterThanOrEqual(panel.x + panel.width);
+    expect(canvas.x + canvas.width).toBeLessThanOrEqual(width);
+  }
+});
 test("selects imported themes, edits bound text inline, and changes theme with undo", async ({
   page,
 }, info) => {

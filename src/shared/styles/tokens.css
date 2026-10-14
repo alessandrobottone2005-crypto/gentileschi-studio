@@ -205,7 +205,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   .editor-project-title { width: auto !important; min-width: 0; flex: 1; }
   .editor-header-actions { width: 100%; display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px !important; }
   .editor-header-actions button { justify-content: center; min-height: 36px; padding: 6px 4px !important; font-size: 11px !important; white-space: nowrap; }
-  .mobile-tab-bar button { min-height: 44px; }
   .slide-navigator { gap: 6px !important; padding: 8px 12px !important; }
   .slide-list { gap: 8px !important; padding-bottom: 0 !important; }
   .slide-thumb { width: 50px !important; height: 63px !important; }
@@ -215,22 +214,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   .mobile-slide-actions button { min-height: 44px; padding: 8px; text-align: left; color: var(--ui-ink); background: transparent; border: 0; cursor: pointer; }
   .mobile-slide-actions button:disabled { opacity: .45; cursor: default; }
   .editor-preview-panel { padding: 12px !important; }
-  .mobile-tab-bar {
-    display: flex !important;
-  }
-
-  .workspace.mobile-editor .editor-preview-panel {
-    display: none !important;
-  }
-
-  .workspace.mobile-preview .editor-left-panel {
-    display: none !important;
-  }
-
-  .editor-left-panel {
-    width: 100% !important;
-    border-right: none !important;
-  }
 }
 
 @media (max-width: 600px) {
