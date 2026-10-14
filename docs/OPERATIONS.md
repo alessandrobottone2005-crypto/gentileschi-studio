@@ -12,7 +12,7 @@ I file `.env`, `.env.local`, `.vercel/`, cache, screenshot e report di prova son
 
 La lista di riferimento è [`.env.example`](../.env.example). Il browser usa `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`; quest’ultimo nome è mantenuto per compatibilità e contiene la chiave pubblica Supabase.
 
-I servizi server usano `SUPABASE_SERVER_KEY`, `PIXABAY_API_KEY` e `GEMINI_API_KEY`. Sono accettati anche `SUPABASE_SERVICE_ROLE_KEY` come fallback della chiave privilegiata e `SUPABASE_URL`/`SUPABASE_ANON_KEY` come alias server della configurazione pubblica. Non assegnare mai un prefisso `VITE_` alle chiavi private.
+I servizi server usano `SUPABASE_SERVER_KEY`, `PIXABAY_API_KEY` e `GEMINI_API_KEY`. Sono accettati anche `SUPABASE_SERVICE_ROLE_KEY` come fallback della chiave privilegiata e `SUPABASE_URL`/`SUPABASE_ANON_KEY` come alias server della configurazione pubblica. Tutte le API danno precedenza a `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`: eventuali alias creati da integrazioni Vercel precedenti non devono indirizzare l’autenticazione verso un altro progetto. Non assegnare mai un prefisso `VITE_` alle chiavi private.
 
 Configurare separatamente Preview e Production in Vercel. Una variabile disponibile soltanto per una branch di anteprima non è automaticamente disponibile in produzione. Dopo la modifica, creare un nuovo deployment; per le prove locali, riavviare il processo.
 
