@@ -1,0 +1,114 @@
+{
+  "themes/aa9c0cef-2f9a-4812-824c-54d739ea5dbd.svg": {
+    "label": "Fascia diagonale · BLU GENTILESCHI",
+    "color": "#102A52"
+  },
+  "themes/56c122f7-390c-43e7-b116-cf2eb91ce664.svg": {
+    "label": "Adesivo · BLU GENTILESCHI",
+    "color": "#B8D6FF"
+  },
+  "themes/2adeac72-0428-427e-95e1-26f3ad43227e.svg": {
+    "label": "Cerchio aperto · BLU GENTILESCHI",
+    "color": "#B8D6FF"
+  },
+  "themes/6242eab5-f342-4647-81f8-587631dbc25f.svg": {
+    "label": "Logo Gentileschi · BLU GENTILESCHI",
+    "color": "#102a52"
+  },
+  "themes/1363238c-4225-4b6b-b89d-b88aa3b26dfc.svg": {
+    "label": "Pittogramma Gentileschi · BLU GENTILESCHI",
+    "color": "#2E80FF"
+  },
+  "themes/2802a9fd-1c0c-40fb-b572-723dc1a3fab5.svg": {
+    "label": "Fascia diagonale · CELESTE CARTA",
+    "color": "#2E80FF"
+  },
+  "themes/61319ca5-7e41-4f17-ade9-4f52b93dad25.svg": {
+    "label": "Adesivo · CELESTE CARTA",
+    "color": "#78ADFF"
+  },
+  "themes/3832a719-c756-4f2f-806b-a7f762ae36ce.svg": {
+    "label": "Cerchio aperto · CELESTE CARTA",
+    "color": "#78ADFF"
+  },
+  "themes/037a0ea5-6566-4bbc-8c97-bfc4be344921.svg": {
+    "label": "Logo Gentileschi · CELESTE CARTA",
+    "color": "#2E80FF"
+  },
+  "themes/1935be08-82fc-47ee-9546-e1e0d945a204.svg": {
+    "label": "Fascia diagonale · BLU NOTTE",
+    "color": "#78ADFF"
+  },
+  "themes/93bb46c5-a305-4881-9754-1ad60991d636.svg": {
+    "label": "Cerchio aperto · ORBITA BLU",
+    "color": "#1757B8"
+  },
+  "themes/c8ccbc1a-6a0b-41ef-9939-e391be516bca.svg": {
+    "label": "Cerchio Aperto1 · ORBITA BLU",
+    "color": "#B8D6FF"
+  },
+  "themes/2f9977ba-4268-4abe-84b4-ff41063066fe.svg": {
+    "label": "Adesivo · ORBITA BLU",
+    "color": "#B8D6FF"
+  },
+  "themes/2b409d03-8261-4667-a2cc-ad8dff86fd2f.svg": {
+    "label": "Cerchio aperto · ORBITA CELESTE",
+    "color": "#B8D6FF"
+  },
+  "themes/cdeaaac1-0e33-4e90-94d0-3b1eef2124b5.svg": {
+    "label": "Cerchio Aperto1 · ORBITA CELESTE",
+    "color": "#2E80FF"
+  },
+  "themes/22c24bd0-225f-451b-9ebb-e28d734368e6.svg": {
+    "label": "Adesivo · ORBITA CELESTE",
+    "color": "#2E80FF"
+  },
+  "themes/9b3fc655-e4b6-42ce-ae02-0630e6e5a607.svg": {
+    "label": "Cerchio aperto · ORBITA NOTTE",
+    "color": "#2E80FF"
+  },
+  "themes/37f8e3a3-0f1e-4f87-8900-2dd7af086fd0.svg": {
+    "label": "Cerchio Aperto1 · ORBITA NOTTE",
+    "color": "#78ADFF"
+  },
+  "themes/1e1cd874-09d3-49af-abaf-a2715af757e1.svg": {
+    "label": "Adesivo · ORBITA NOTTE",
+    "color": "#78ADFF"
+  },
+  "themes/d004dd07-83e1-469d-ae74-cfa37f73720c.svg": {
+    "label": "Cartiglio Laterale · COLLAGE AZZURRO",
+    "color": "#102A52"
+  },
+  "themes/16410862-4b41-4230-86a8-f0ab27c1aef3.svg": {
+    "label": "Cerchio aperto · COLLAGE AZZURRO",
+    "color": "#2E80FF"
+  },
+  "themes/5793ac0c-7633-4462-a203-d2dd58ae325b.svg": {
+    "label": "Adesivo · COLLAGE AZZURRO",
+    "color": "#2E80FF"
+  },
+  "themes/fac649ad-4257-41cf-a56c-7d2d5b8e81f1.svg": {
+    "label": "Cartiglio Laterale · COLLAGE ARIA",
+    "color": "#1757B8"
+  },
+  "themes/253e2353-c7cd-4f1a-95fa-ee9d9db4b237.svg": {
+    "label": "Adesivo · COLLAGE ARIA",
+    "color": "#B8D6FF"
+  },
+  "themes/b17cc0a9-754f-4221-9328-e20490bb6a18.svg": {
+    "label": "Cartiglio Laterale · COLLAGE PROFONDO",
+    "color": "#102a52"
+  },
+  "themes/deaa7e94-da1a-4e6c-b1d1-3a2ea180a441.svg": {
+    "label": "Adesivo · EDITORIALE LIME",
+    "color": "#DFFF2F"
+  },
+  "themes/d2428a3f-9c65-4a28-a53c-ae4fdddf8b6a.svg": {
+    "label": "Adesivo · EDITORIALE CORALLO",
+    "color": "#FF806C"
+  },
+  "themes/35e141fe-c56a-45c3-ba8a-7bb9a909c94d.svg": {
+    "label": "Adesivo · EDITORIALE SOLE",
+    "color": "#FFD166"
+  }
+}

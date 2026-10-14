@@ -1,12 +1,13 @@
 import React from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
+import { renderToPipeableStream, renderToStaticMarkup } from 'react-dom/server';
+import { PassThrough } from 'node:stream';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
-import { AuthPage } from '../pages/AuthPage';
+import { AuthPage } from '../features/auth/AuthPage';
 import { App } from '../App';
-import { clearGoogleOAuthReturnError, continueWithGoogle, GOOGLE_AUTH_ERROR, googleOAuthReturnError } from '../services/supabase/googleAuth';
+import { clearGoogleOAuthReturnError, continueWithGoogle, GOOGLE_AUTH_ERROR, googleOAuthReturnError } from '../features/auth/services/googleAuth';
 
 const { signInWithOAuth } = vi.hoisted(() => ({ signInWithOAuth: vi.fn() }));
-vi.mock('../services/supabase/supabaseClient', () => ({
+vi.mock('../shared/lib/supabaseClient', () => ({
   isSupabaseConfigured: true,
   supabase: { auth: { signInWithOAuth } },
 }));
@@ -44,9 +45,21 @@ describe('Google sign in', () => {
     expect(html).not.toContain('type="email"');
     expect(html).not.toContain('Invia link di accesso');
   });
-  it('renders the privacy route without a session', () => {
+  it('renders the privacy route without a session', async () => {
     location('https://gentileschi-studio.vercel.app/privacy');
-    const html = renderToStaticMarkup(<App />);
+    // Wait for lazy route modules, while retaining the assertion that privacy
+    // renders without consulting an authenticated session.
+    const html = await new Promise<string>((resolve, reject) => {
+      const output = new PassThrough();
+      let markup = '';
+      output.on('data', (chunk) => { markup += chunk.toString(); });
+      output.on('end', () => resolve(markup));
+      output.on('error', reject);
+      const stream = renderToPipeableStream(<App />, {
+        onAllReady() { stream.pipe(output); },
+        onError: reject,
+      });
+    });
     expect(html).toContain('Informativa sulla privacy');
     expect(html).toContain('Tutti gli utenti registrati');
     expect(html).not.toContain('Caricamento in corso');

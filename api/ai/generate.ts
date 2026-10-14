@@ -1,9 +1,9 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from '../../server/http.js';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { aiLimits } from '../../server/aiLimits.js';
-import { generateValidCarousel, InvalidCarouselResponseError } from '../../src/services/ai/carouselResponse.js';
-import { isValidEventDate } from '../../src/engine/dateUtils.js';
+import { generateValidCarousel, InvalidCarouselResponseError } from '../../src/features/editor/services/ai/carouselResponse.js';
+import { isValidEventDate } from '../../src/shared/composition/dateUtils.js';
 
 const carouselInput = z.object({
   mode: z.literal('carousel'), prompt: z.string().trim().min(1).max(6000),
@@ -49,7 +49,7 @@ async function generateWithGemini(apiKey: string, prompt: string, schema?: Recor
   throw new AiProviderError(lastError);
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Metodo non consentito.' });
   const input = inputSchema.safeParse(req.body);
   if (!input.success) {

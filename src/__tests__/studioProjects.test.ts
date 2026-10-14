@@ -3,10 +3,10 @@ import {
   getProjects,
   saveProject,
   deleteProject,
-} from '../services/supabase/projectService';
-import { createInitialProject } from '../engine/defaultData';
-import { isOwnProject } from '../studio/ProjectList';
-vi.mock('../services/supabase/supabaseClient', () => ({
+} from '../shared/data/projectService';
+import { createInitialProject } from '../shared/composition/defaultData';
+import { isOwnProject } from '../features/dashboard/ProjectList';
+vi.mock('../shared/lib/supabaseClient', () => ({
   supabase: null,
   isSupabaseConfigured: false,
 }));

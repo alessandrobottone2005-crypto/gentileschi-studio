@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createInitialProject } from '../engine/defaultData';
-import { serializeProject } from '../services/image/mediaStore';
+import { createInitialProject } from '../shared/composition/defaultData';
+import { serializeProject } from '../features/media/services/mediaStore';
 
 describe('project image persistence', () => {
   it('stores media paths without temporary browser URLs', () => {

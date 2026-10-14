@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.server.json",
+  "include": ["vite.config.ts", "playwright.config.ts"],
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true
+  }
+}
