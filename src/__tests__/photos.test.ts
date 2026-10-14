@@ -5,6 +5,7 @@ import {
   photoSearchSchema,
   safePixabayUrl,
   PhotoApiError,
+  photoClients,
 } from "../../server/photos/pixabay";
 import { tonePixel, GENTILESCHI_EFFECT } from "../features/media/services/photoEffects";
 import { officialThemes } from "../features/themes/model/themes";
@@ -50,6 +51,26 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 describe("Pixabay provider boundary", () => {
+  it("authenticates against the app project when integration aliases are also configured", () => {
+    vi.stubEnv("VITE_SUPABASE_URL", "https://studio.supabase.co");
+    vi.stubEnv("VITE_SUPABASE_ANON_KEY", "studio-public-key");
+    vi.stubEnv("SUPABASE_URL", "https://legacy.supabase.co");
+    vi.stubEnv("SUPABASE_ANON_KEY", "legacy-public-key");
+    vi.stubEnv("SUPABASE_SERVER_KEY", "studio-server-key");
+    const clients = photoClients();
+    expect(clients.url).toBe("https://studio.supabase.co");
+    expect(clients.anon).toBe("studio-public-key");
+  });
+  it("supports server aliases when the app configuration is absent", () => {
+    vi.stubEnv("VITE_SUPABASE_URL", "");
+    vi.stubEnv("VITE_SUPABASE_ANON_KEY", "");
+    vi.stubEnv("SUPABASE_URL", "https://studio.supabase.co");
+    vi.stubEnv("SUPABASE_ANON_KEY", "studio-public-key");
+    vi.stubEnv("SUPABASE_SERVER_KEY", "studio-server-key");
+    const clients = photoClients();
+    expect(clients.url).toBe("https://studio.supabase.co");
+    expect(clients.anon).toBe("studio-public-key");
+  });
   it("validates Italian searches, orientation and bounded pages", () => {
     expect(photoSearchSchema.parse({ q: " scuola " })).toEqual({
       q: "scuola",
