@@ -6,10 +6,10 @@ import {
   safePixabayUrl,
   PhotoApiError,
 } from "../../server/photos/pixabay";
-import { tonePixel, GENTILESCHI_EFFECT } from "../services/image/photoEffects";
-import { officialThemes } from "../engine/themes";
-import { allNodes } from "../engine/scene";
-import { SCENE_ASSETS } from "../engine/sceneAssets";
+import { tonePixel, GENTILESCHI_EFFECT } from "../features/media/services/photoEffects";
+import { officialThemes } from "../features/themes/model/themes";
+import { allNodes } from "../shared/composition/scene";
+import { SCENE_ASSETS } from "../shared/composition/sceneAssets";
 const hit = {
   id: 42,
   pageURL: "https://pixabay.com/photos/42",

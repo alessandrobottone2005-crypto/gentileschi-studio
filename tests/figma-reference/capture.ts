@@ -1,7 +1,7 @@
-import type { Slide, TemplateType } from '../../src/types/template';
-import type { SceneNode, NodeStyle } from '../../src/types/scene';
-import { assetIdForUrl } from '../../src/engine/sceneAssets';
-import { allNodes, clone } from '../../src/engine/scene';
+import type { Slide, TemplateType } from '../../src/shared/types/template';
+import type { SceneNode, NodeStyle } from '../../src/shared/types/scene';
+import { assetIdForUrl } from '../../src/shared/composition/sceneAssets';
+import { allNodes, clone } from '../../src/shared/composition/scene';
 
 // Geometry comes exclusively from the native-CSS conversion of Figma's context.
 export function captureFigmaFrame(frame: HTMLElement, type: TemplateType): Slide {

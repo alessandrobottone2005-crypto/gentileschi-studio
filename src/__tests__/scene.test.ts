@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { SceneNode, SlideScene } from "../types/scene";
+import type { SceneNode, SlideScene } from "../shared/types/scene";
 import {
   adaptScene,
   allNodes,
@@ -15,12 +15,12 @@ import {
   updateNode,
   reorderNode,
   visibleSlideText,
-} from "../engine/scene";
+} from "../shared/composition/scene";
 import {
   createDefaultSlide,
   createInitialProject,
-} from "../engine/defaultData";
-import { serializeProject, projectImages } from "../services/image/mediaStore";
+} from "../shared/composition/defaultData";
+import { serializeProject, projectImages } from "../features/media/services/mediaStore";
 
 const text = (id = "title"): SceneNode => ({
   ...makeNode("text"),

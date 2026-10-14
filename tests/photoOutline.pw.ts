@@ -4,7 +4,7 @@ test("photo outline does not amplify faint background-removal residue", async ({
   await page.goto("/");
   const result = await page.evaluate(async () => {
     // @ts-expect-error Vite serves this module directly in the browser.
-    const { styledPhoto, GENTILESCHI_EFFECT } = await import("/src/services/image/photoEffects.ts");
+    const { styledPhoto, GENTILESCHI_EFFECT } = await import("/src/features/media/services/photoEffects.ts");
     const source = document.createElement("canvas");
     source.width = source.height = 108;
     const context = source.getContext("2d")!;

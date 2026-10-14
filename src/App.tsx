@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { DashboardPage } from './pages/DashboardPage';
-import { EditorPage } from './pages/EditorPage';
-import { Project } from './types/template';
-import { getProjects } from './services/supabase/projectService';
-import { isSupabaseConfigured, supabase } from './services/supabase/supabaseClient';
-import { AuthPage } from './pages/AuthPage';
-import { PrivacyPage } from './pages/PrivacyPage';
+import { Brand } from './shared/ui/Brand';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
+const DashboardPage = lazy(() => import('./features/dashboard/DashboardPage').then((module) => ({ default: module.DashboardPage })));
+const EditorPage = lazy(() => import('./features/editor/EditorPage').then((module) => ({ default: module.EditorPage })));
+import { Project } from './shared/types/template';
+import { isSupabaseConfigured, supabase } from './shared/lib/supabaseClient';
+const AuthPage = lazy(() => import('./features/auth/AuthPage').then((module) => ({ default: module.AuthPage })));
+const PrivacyPage = lazy(() => import('./features/auth/PrivacyPage').then((module) => ({ default: module.PrivacyPage })));
 import type { Session } from '@supabase/supabase-js';
-import './design-system/tokens.css';
+import './shared/styles/tokens.css';
 
-export const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const isPrivacyPage = window.location.pathname.replace(/\/$/, '') === '/privacy';
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
@@ -42,6 +42,7 @@ export const App: React.FC = () => {
     setLoading(true);
     setOpenError('');
     try {
+      const { getProjects } = await import('./shared/data/projectService');
       const projects = await getProjects();
       const target = projects.find((p) => p.id === projectId);
       if (target) {
@@ -70,8 +71,9 @@ export const App: React.FC = () => {
 
   if (authLoading || loading) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0b0e2b', color: '#dfff2f' }}>
-        Caricamento in corso...
+      <div className="app-loading" role="status">
+        <Brand />
+        <span>Caricamento in corso…</span>
       </div>
     );
   }
@@ -91,4 +93,9 @@ export const App: React.FC = () => {
   return <DashboardPage key={session?.user.id || 'local'} userId={session?.user.id} onOpenProject={handleOpenProject} onSignOut={isSupabaseConfigured ? handleSignOut : undefined} openError={openError} />;
 };
 
+export const App: React.FC = () => (
+  <Suspense fallback={<div className="app-loading" role="status"><Brand /><span>Caricamento in corso…</span></div>}>
+    <AppContent />
+  </Suspense>
+);
 export default App;

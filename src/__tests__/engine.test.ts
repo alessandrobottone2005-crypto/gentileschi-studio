@@ -4,13 +4,13 @@ import {
   validateCoverContent,
   validateAgendaContent,
   validateNoticeContent,
-} from '../engine/adaptiveLayout';
-import { formatDateToItalian } from '../engine/dateUtils';
-import { formatProjectSlug } from '../services/export/exportEngine';
-import { TEMPLATE_REGISTRY } from '../templates/registry';
-import { createDefaultSlide, createInitialProject } from '../engine/defaultData';
-import { AiGeneratedCarouselResponseSchema } from '../services/ai/schemas';
-import { extractJson } from '../services/ai/geminiService';
+} from '../shared/composition/adaptiveLayout';
+import { formatDateToItalian } from '../shared/composition/dateUtils';
+import { formatProjectSlug } from '../features/editor/services/export/exportEngine';
+import { TEMPLATE_REGISTRY } from '../shared/rendering/registry';
+import { createDefaultSlide, createInitialProject } from '../shared/composition/defaultData';
+import { AiGeneratedCarouselResponseSchema } from '../features/editor/services/ai/schemas';
+import { extractJson } from '../features/editor/services/ai/geminiService';
 
 describe('Adaptive Layout Engine', () => {
   it('calcola correttamente la dimensione adattiva del font per testi brevi e lunghi', () => {

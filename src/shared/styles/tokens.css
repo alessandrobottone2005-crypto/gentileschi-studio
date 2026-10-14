@@ -1,0 +1,299 @@
+:root {
+  color-scheme: light;
+  --ui-canvas: #f5f5f5;
+  --ui-surface: #ffffff;
+  --ui-surface-hover: #eeeeee;
+  --ui-ink: #000000;
+  --ui-muted: #555555;
+  --ui-border: #d4d4d4;
+  --ui-control-border: #767676;
+  --ui-primary: #000000;
+  --ui-on-primary: #ffffff;
+  --ui-focus: #000000;
+  --ui-overlay: rgba(0, 0, 0, 0.45);
+  --ui-selected: #e8e8e8;
+  --ui-shadow: rgba(0, 0, 0, 0.12);
+
+  /* Composition palette: preserved independently from the application UI. */
+  --color-electric-blue: #1728e8;
+  --color-dark-navy: #10143d;
+  --color-deep-blue: #10108c;
+  --color-cobalt-blue: #304bff;
+  --color-soft-blue: #7b88ff;
+  --color-acid-lime: #dfff2f;
+  --color-warm-white: #f4f0e6;
+  --color-pure-white: #ffffff;
+
+  /* Neutrals & Dark Text */
+  --color-text-dark: #10143d;
+  --color-text-light: #ffffff;
+  --color-text-muted: #5e6482;
+
+  /* Typography */
+  --font-display: 'Archivo Black', system-ui, sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
+  --font-hand: 'Comic Neue', cursive;
+
+  /* Effects */
+  --shadow-hard: 12px 16px 0px rgba(8, 13, 92, 0.26);
+  --shadow-hard-dark: 12px 16px 0px rgba(8, 13, 92, 0.30);
+  --shadow-hard-sm: 6px 8px 0px rgba(8, 13, 92, 0.20);
+
+  /* Dimensions */
+  --slide-width: 1080px;
+  --slide-height: 1350px;
+  --slide-aspect: 4 / 5;
+}
+
+/* Base resets & utilities */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--ui-canvas);
+  color: var(--ui-ink);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, a:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--ui-focus);
+  box-shadow: 0 0 0 4px var(--ui-surface);
+  outline-offset: 2px;
+}
+
+.secondary-action {
+  border: 1px solid var(--ui-focus);
+  border-radius: 6px;
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.app-error, .save-banner {
+  color: var(--ui-ink);
+  background: var(--ui-selected);
+  border: 1px solid var(--ui-control-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.app-error button, .save-banner button {
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 5px 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+.local-import-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 16px;
+  border: 1px solid var(--ui-focus);
+  border-radius: 8px;
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+  font-size: 13px;
+}
+.local-import-notice button {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 5px;
+  padding: 9px 12px;
+  background: var(--ui-primary);
+  color: var(--ui-on-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.save-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.editor-signout {
+  color: var(--ui-muted);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.mobile-slide-menu { display: none; }
+
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.auth-card {
+  width: min(100%, 440px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 28px;
+  border: 1px solid var(--ui-focus);
+  border-radius: 12px;
+  background: var(--ui-surface);
+}
+.auth-eyebrow {
+  width: fit-content;
+  background: var(--ui-primary);
+  color: var(--ui-on-primary);
+  padding: 4px 7px;
+  font-size: 11px;
+  font-weight: 900;
+}
+.auth-card h1 { font: 25px var(--font-display); color: var(--ui-ink); }
+.auth-card p, .auth-card small { color: var(--ui-muted); line-height: 1.5; }
+.auth-card label { color: var(--ui-ink); font-size: 13px; font-weight: 700; }
+.auth-card input { min-height: 44px; padding: 10px 12px; background: var(--ui-surface); border: 1px solid var(--ui-focus); border-radius: 6px; color: var(--ui-ink); font-size: 15px; }
+.auth-card button { min-height: 44px; border: 0; border-radius: 6px; background: var(--ui-primary); color: var(--ui-on-primary); font-weight: 800; cursor: pointer; }
+.auth-card .auth-error { color: var(--ui-ink); }
+.auth-card .auth-success { color: var(--ui-ink); }
+.auth-card .google-auth-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-control-border);
+  color: var(--ui-ink);
+  padding: 12px 16px;
+  font: 600 14px var(--font-sans);
+}
+.google-auth-button:disabled { opacity: 0.65; cursor: wait; }
+.auth-card a { color: var(--ui-ink); text-underline-offset: 3px; }
+.auth-privacy-link { font-size: 13px; width: fit-content; }
+.privacy-card { width: min(100%, 760px); }
+.privacy-card h2 { color: var(--ui-ink); font-size: 18px; margin: 0 0 10px; }
+.privacy-card p { margin: 0 0 12px; }
+.privacy-card a { overflow-wrap: anywhere; }
+
+/* ---------------------------------------------
+   Editor responsive (≤900px)
+   Pannello modifica e anteprima si alternano
+   tramite la tab bar, così il post resta intero
+   e non tagliato anche su schermi stretti.
+   --------------------------------------------- */
+@media (max-width: 900px) {
+  .editor-header {
+    height: auto !important;
+    min-height: 104px;
+    padding: 8px 12px !important;
+    gap: 8px;
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+  .editor-header-main { width: 100%; gap: 6px !important; }
+  .editor-project-title { width: auto !important; min-width: 0; flex: 1; }
+  .editor-header-actions { width: 100%; display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px !important; }
+  .editor-header-actions button { justify-content: center; min-height: 36px; padding: 6px 4px !important; font-size: 11px !important; white-space: nowrap; }
+  .mobile-tab-bar button { min-height: 44px; }
+  .slide-navigator { gap: 6px !important; padding: 8px 12px !important; }
+  .slide-list { gap: 8px !important; padding-bottom: 0 !important; }
+  .slide-thumb { width: 50px !important; height: 63px !important; }
+  .slide-actions { display: none !important; }
+  .mobile-slide-menu { display: block; }
+  .mobile-slide-actions { position: absolute; bottom: calc(100% + 6px); right: 0; z-index: 60; width: 160px; display: flex; flex-direction: column; padding: 4px; border: 1px solid var(--ui-focus); border-radius: 6px; background: var(--ui-surface); box-shadow: 0 8px 24px var(--ui-shadow); }
+  .mobile-slide-actions button { min-height: 44px; padding: 8px; text-align: left; color: var(--ui-ink); background: transparent; border: 0; cursor: pointer; }
+  .mobile-slide-actions button:disabled { opacity: .45; cursor: default; }
+  .editor-preview-panel { padding: 12px !important; }
+  .mobile-tab-bar {
+    display: flex !important;
+  }
+
+  .workspace.mobile-editor .editor-preview-panel {
+    display: none !important;
+  }
+
+  .workspace.mobile-preview .editor-left-panel {
+    display: none !important;
+  }
+
+  .editor-left-panel {
+    width: 100% !important;
+    border-right: none !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .local-import-notice { flex-direction: column; align-items: stretch; }
+  .dashboard-label, .save-indicator span { display: none; }
+  .editor-header-main > div:nth-child(2) { display: none; }
+  .editor-signout { font-size: 11px; }
+  .save-banner { align-items: flex-start; flex-wrap: wrap; }
+  .save-banner span { width: 100%; }
+}
+
+/* The application chrome is monochromatic; composition frames own their colours. */
+::selection { background: var(--ui-primary); color: var(--ui-on-primary); }
+.app-loading {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--ui-ink);
+  text-decoration: none;
+  font-family: var(--font-sans);
+  flex-shrink: 0;
+}
+.brand-artwork { display: block; width: 52px; height: auto; object-fit: contain; flex-shrink: 0; }
+.brand .brand-name { display: flex; flex-direction: column; gap: 3px; line-height: 1.1; }
+.brand-name strong { font-size: 16px; font-weight: 800; letter-spacing: -0.04em; }
+.brand-name > span { font-size: 12px; font-weight: 500; letter-spacing: 0.14em; }
+.brand-compact .brand-artwork { width: 36px; }
+.brand-compact .brand-name strong { font-size: 13px; }
+.brand-compact .brand-name > span { font-size: 10px; }
+.brand-school { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+.brand-school .brand-artwork { width: 220px; max-width: 100%; }
+.brand-school .brand-name > span { font-size: 18px; letter-spacing: 0.08em; }
+.auth-card h1 { font-family: var(--font-sans); font-size: 24px; font-weight: 800; letter-spacing: -0.04em; }
+.auth-card .auth-error { border: 1px solid var(--ui-ink); border-radius: 6px; padding: 12px; color: var(--ui-ink); }
+.auth-card .auth-success { color: var(--ui-muted); }
+.auth-card a { color: var(--ui-ink); }
+button, input, textarea, select { font-family: inherit; }
+button:disabled { opacity: .5; cursor: default; }
+.editor-dialog { color-scheme: light; overscroll-behavior: contain; scrollbar-gutter: stable; }
+.editor-dialog button { min-height: 44px; }
+.editor-dialog button[aria-label^="Chiudi"] { min-width: 44px; display: grid; place-items: center; }
+.editor-dialog :is(input:not([type="checkbox"]):not([type="radio"]), textarea, select) { min-height: 44px; }
+.editor-dialog textarea { max-height: 40dvh; }
+.editor-dialog > div:last-child { flex-wrap: wrap; }
+@media (max-width: 759px) {
+  .canva-editor .editor-header-actions > button,
+  .canva-editor .graphic-project-toolbar :is(button, select),
+  .workspace-context :is(button, input, select),
+  .workspace-view-controls :is(button, input, select),
+  .studio-filters button { min-height: 44px; }
+  .editor-dialog { padding: 20px 16px !important; }
+  .editor-dialog > div:first-child { gap: 8px; }
+  .editor-dialog > div:first-child h2 { font-size: 18px !important; }
+}
+
+:is(.canva-editor, .studio-shell, .studio-dialog, .editor-dialog) input:is([type="checkbox"], [type="radio"], [type="range"]) { accent-color: var(--ui-primary); }

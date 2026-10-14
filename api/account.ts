@@ -1,8 +1,8 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from '../server/http.js';
 import { createClient } from '@supabase/supabase-js';
 import { aiLimits, quotaDay, quotaSummary } from '../server/aiLimits.js';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   res.setHeader('Cache-Control', 'private, no-store');
   if (req.method !== 'GET')
     return res.status(405).json({ error: 'Metodo non consentito.' });

@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { ApiRequest, ApiResponse } from "../server/http.js";
 import { createClient } from "@supabase/supabase-js";
 import {
   photoClients,
@@ -8,7 +8,7 @@ import {
   PhotoApiError,
 } from "../server/photos/pixabay.js";
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   if (!["GET", "POST"].includes(req.method || ""))
     return res.status(405).json({ error: "Metodo non consentito." });
   res.setHeader("Cache-Control", "no-store");
@@ -48,7 +48,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
       return res.status(200).json(result);
     }
-    const id = Number(req.body?.id);
+    const id = Number(
+      typeof req.body === 'object' && req.body !== null && 'id' in req.body
+        ? req.body.id
+        : undefined,
+    );
     if (!Number.isSafeInteger(id) || id < 1)
       throw new PhotoApiError(400, "Fotografia non valida.");
     const result = await cachedSearch(clients.cache, { id: String(id) });

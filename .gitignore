@@ -35,6 +35,7 @@ scripts/figma-metrics.json
 .vercel
 
 # Visual verification captures and transient build measurements
+/preview/
 .impeccable/review/
 .impeccable/build/
 test-results/

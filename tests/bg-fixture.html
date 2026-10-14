@@ -1,4 +1,4 @@
 <html><body><button id="run">Avvia</button><div id="status">Pronto</div><script type="module">
-import {removeImageBackground} from '/src/services/image/bgRemovalService.ts';
+import {removeImageBackground} from '/src/features/media/services/bgRemovalService.ts';
 document.getElementById('run').onclick=async()=>{try{const url=await removeImageBackground('/src/assets/figma/gentileschi-statue.png',p=>document.getElementById('status').textContent=p.phase+' '+p.progress);const img=document.createElement('img');img.src=url;await img.decode();document.body.append(img);document.getElementById('status').textContent='OK '+img.naturalWidth+'x'+img.naturalHeight;}catch(e){document.getElementById('status').textContent='ERROR '+e.message;}};
 </script></body></html>

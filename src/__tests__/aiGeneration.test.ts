@@ -1,7 +1,7 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { isValidEventDate } from '../engine/dateUtils';
-import { INVALID_CAROUSEL_MESSAGE } from '../services/ai/schemas';
+import type { ApiRequest, ApiResponse } from '../../server/http';
+import { isValidEventDate } from '../shared/composition/dateUtils';
+import { INVALID_CAROUSEL_MESSAGE } from '../features/editor/services/ai/schemas';
 import handler from '../../api/ai/generate';
 
 const { getUser, rpc } = vi.hoisted(() => ({ getUser: vi.fn(), rpc: vi.fn() }));
@@ -27,7 +27,7 @@ function providerText(text: string) {
 async function request(body: unknown, authorization: string | undefined = 'Bearer test-session') {
   const res = { status: vi.fn(), json: vi.fn() };
   res.status.mockReturnValue(res);
-  await handler({ method: 'POST', body, headers: { authorization } } as VercelRequest, res as unknown as VercelResponse);
+  await handler({ method: 'POST', body, headers: { authorization } } as ApiRequest, res as unknown as ApiResponse);
   return { status: res.status.mock.calls[0][0], body: res.json.mock.calls[0][0] };
 }
 
@@ -98,7 +98,7 @@ describe('AI generation endpoint', () => {
   it('rejects a missing session before quota and generation', async () => {
     const res = { status: vi.fn(), json: vi.fn() };
     res.status.mockReturnValue(res);
-    await handler({ method: 'POST', body: { mode: 'carousel', prompt, eventDate }, headers: {} } as VercelRequest, res as unknown as VercelResponse);
+    await handler({ method: 'POST', body: { mode: 'carousel', prompt, eventDate }, headers: {} } as ApiRequest, res as unknown as ApiResponse);
     expect(res.status).toHaveBeenCalledWith(401);
     expect(rpc).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();

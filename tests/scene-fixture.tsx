@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { createInitialProject } from "../src/engine/defaultData";
-import { captureLegacyScene } from "../src/engine/captureLegacy";
-import { renderLegacySlide } from "../src/templates/legacy";
-import { SceneRenderer } from "../src/templates/SceneRenderer";
-import { TemplateWrapper } from "../src/templates/TemplateWrapper";
-import type { Slide } from "../src/types/template";
-import "../src/design-system/tokens.css";
+import { createInitialProject } from "../src/shared/composition/defaultData";
+import { captureLegacyScene } from "../src/shared/composition/captureLegacy";
+import { renderLegacySlide } from "../src/shared/rendering/legacy";
+import { SceneRenderer } from "../src/shared/rendering/SceneRenderer";
+import { TemplateWrapper } from "../src/shared/rendering/TemplateWrapper";
+import type { Slide } from "../src/shared/types/template";
+import "../src/shared/styles/tokens.css";
 function Comparison() {
   const [slides, setSlides] = useState<Slide[]>([]);
   useEffect(() => {

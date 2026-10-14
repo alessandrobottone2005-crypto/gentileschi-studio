@@ -1,13 +1,13 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
-import { createInitialProject } from "../engine/defaultData";
+import { createInitialProject } from "../shared/composition/defaultData";
 import {
   deleteTheme,
   listThemes,
   saveTheme,
   ThemeConflictError,
-} from "../services/supabase/themeService";
-import type { GraphicTheme } from "../types/scene";
-vi.mock("../services/supabase/supabaseClient", () => ({
+} from "../features/themes/services/themeService";
+import type { GraphicTheme } from "../shared/types/scene";
+vi.mock("../shared/lib/supabaseClient", () => ({
   supabase: null,
   isSupabaseConfigured: false,
 }));

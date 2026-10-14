@@ -1,6 +1,6 @@
 import React from 'react';
 import {createRoot} from 'react-dom/client';
-import '../src/design-system/tokens.css';
+import '../src/shared/styles/tokens.css';
 import {captureFigmaFrame} from './figma-reference/capture';
 import Theme1 from './figma-reference/native/assemblea-01';
 import Theme2 from './figma-reference/native/assemblea-02';
@@ -20,7 +20,7 @@ const i=Number(new URLSearchParams(location.search).get('theme')||1)-1;
 createRoot(document.getElementById('root')!).render(React.createElement(themes[i]));
 (window as any).capture=async()=>{await document.fonts.ready;await Promise.all([...document.images].map(x=>x.decode()));return [...document.querySelectorAll<HTMLElement>('[data-name]')].filter(x=>/assemblea-\d+\/(cover|agenda|notice)$/.test(x.dataset.name||'')).map(x=>captureFigmaFrame(x,x.dataset.name!.split('/')[1] as any));};
 import importedThemes from '../src/assets/figma/themes.json';
-import {SceneRenderer} from '../src/templates/SceneRenderer';
+import {SceneRenderer} from '../src/shared/rendering/SceneRenderer';
 if(new URLSearchParams(location.search).has('compare')){
   const host=document.createElement('div');host.style.marginTop='1700px';document.body.appendChild(host);
   createRoot(host).render(<div style={{display:'flex',gap:96,marginTop:40}}>{importedThemes[i].slides.map((slide:any)=><div data-testid={'scene-'+slide.templateType} key={slide.id}><SceneRenderer slide={slide}/></div>)}</div>);

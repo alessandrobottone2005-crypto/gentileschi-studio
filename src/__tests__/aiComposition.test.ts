@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
-import { composeAiDraft } from "../engine/aiComposition";
-import { applyTheme } from "../engine/themes";
+import { composeAiDraft } from "../shared/composition/aiComposition";
+import { applyTheme } from "../features/themes/model/themes";
 import {
   createDefaultSlide,
   createInitialProject,
-} from "../engine/defaultData";
-import { allNodes, clone, makeNode } from "../engine/scene";
-import type { Slide } from "../types/template";
-import type { GraphicTheme, SlideScene } from "../types/scene";
+} from "../shared/composition/defaultData";
+import { allNodes, clone, makeNode } from "../shared/composition/scene";
+import type { Slide } from "../shared/types/template";
+import type { GraphicTheme, SlideScene } from "../shared/types/scene";
 
-vi.mock("../engine/captureLegacy", () => ({
+vi.mock("../shared/composition/captureLegacy", () => ({
   captureLegacyScene: async (slide: Slide) =>
     slide.scene || {
       version: 1,
